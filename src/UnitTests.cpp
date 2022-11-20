@@ -119,12 +119,30 @@ int main(){
 
     QuantumState qs(3, std::vector<std::complex<double>>(8, 1/sqrt(8)));
     std::cout << qs << std::endl;
+
+    std::vector<int> numMeasurements(8, 0);
+    for(int i = 0; i < 1e6; i++){
+        QuantumState qscopy = qs;
+        numMeasurements[qscopy.measure().qubitStates]++;
+        if(i == 0){
+            cout << qscopy << std::endl;
+        }
+    }
+    // each entry of the vector should be roughly equal
+    for(int i : numMeasurements){
+        cout << i << " ";
+    }
+    cout << std::endl;
     
-    QuantumState bell(2);
-    bell[0b00] = 1/sqrt(2);
-    bell[0b11] = -1/sqrt(2);
-    cout << bell << std::endl;
-    cout << bell.probability(0b00) << " " << bell.probability(0b01) << " " << bell.probability(0b10) << " " << bell.probability(0b11) << std::endl;
+    // QuantumState bell(2);
+    // bell[0b00] = 1/sqrt(2);
+    // bell[0b11] = -1/sqrt(2);
+    // cout << bell << std::endl;
+    // cout << bell.probability(0b00) << " " << bell.probability(0b01) << " " << bell.probability(0b10) << " " << bell.probability(0b11) << std::endl;
+
+    // std::cout << "MEASUREMENT:" << std::endl;
+    // cout << bell.measure() << std::endl;
+    // cout << bell << std::endl;
 
     return 0;
 }
