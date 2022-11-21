@@ -6,8 +6,8 @@
 #include <iostream>
 #include <ostream>
 
-using Row = std::vector<std::complex<double>>;
-using Matrix = std::vector<Row>;
+using Vector = std::vector<std::complex<double>>;
+using Matrix = std::vector<Vector>;
 
 class Unitary{
     private:
@@ -15,14 +15,15 @@ class Unitary{
 
     public:
     Unitary(Matrix _matrix);
-    Row& operator[](int i);
+    const Vector& operator[](int i) const;
     int size() const;
 
     Unitary operator*(const Unitary& u) const;
     Unitary operator*(const std::complex<double>& z) const;
+    // Vector operator*(const Vector& v) const;
     friend Unitary operator*(const std::complex<double>& z, const Unitary& u);
     Unitary operator-() const;
-
+    
     Unitary tensor(const Unitary& u) const;
     Unitary conjugate() const;
     Unitary transpose() const;
@@ -43,7 +44,6 @@ class Unitary{
     static Unitary phase(double theta);
     static Unitary CNOT();
     static Unitary Toffoli();
-
 };
 
 #endif

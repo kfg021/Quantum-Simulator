@@ -2,7 +2,6 @@
 #include "QuantumState.hpp"
 #include "Test.hpp"
 #include <iostream>
-using namespace std;
 
 // Most of these tests are not actually unitary. But it's just easier to write tests for whole numbers.
 TestObject<Unitary> MultiplyTest1(){
@@ -76,7 +75,7 @@ TestObject<Unitary> TensorTest2(){
         {1, 2},
         {3, 4},
     });
-    Unitary v(Matrix(1, Row(1, std::complex<double>(3, 2))));
+    Unitary v(Matrix(1, Vector(1, std::complex<double>(3, 2))));
     return {"TensorTest2", u.tensor(v), std::complex<double>(3, 2) * u};
 }
 
@@ -100,6 +99,72 @@ TestObject<Unitary> ControlledUnitaryTest2(){
     return {"ControlledUnitaryTest2", Unitary::X().controlled().controlled(), Unitary::Toffoli()};
 }
 
+int myLog(int x){
+    int log = 0;
+    while(x > 1){
+        log++;
+        x >>= 1;
+    }
+    return log;
+}
+
+// Requirements: f(x) is constant or balanced; oracle(|x>|y>) = |x>|y xor f(x)>
+string DeutschJozsa(const Unitary& oracle){
+    int n = myLog(oracle.size()) - 1;
+
+    // initialize first n qubits to 0 and last to 1
+    QuantumState qs(n+1);
+    qs.applyUnitary(Unitary::X(), {n});
+
+    // hadamard transform on all qubits
+    for(int i = 0; i < n+1; i++){
+        qs.applyUnitary(Unitary::H(), {i});
+    }
+
+    // apply the oracle
+    vector<int> all;
+    for(int i = 0; i < n+1; i++){
+        all.push_back(i);
+    }
+    qs.applyUnitary(oracle, all);
+
+    // hadamard transform on first n qubits
+    for(int i = 0; i < n; i++){
+        qs.applyUnitary(Unitary::H(), {i});
+    }
+    cout << qs << "\n";
+
+    Ket output = qs.measure();
+    
+    // if the first n qubits are 0 then the function was constant
+    bool constant = true;
+    for(int i = 0; i < n; i++){
+       if(output.getQubit(i)){
+            constant = false;
+        }
+    }
+
+    if(constant){
+        return "CONSTANT";
+    }
+    else{
+        return "BALANCED";
+    }
+}
+
+Unitary makeOracle(const vector<bool>& f){
+    int n = f.size();
+    int m = myLog(n);
+    Matrix oracle(2*n, Vector(2*n, 0));
+    for(int i = 0; i < 2*n; i++){
+        int x = i >> 1;
+        int y = i & 1;
+        int output = (x << 1) | (y ^ f[x]);
+        oracle[i][output] = 1;
+    }
+    return Unitary(oracle);
+}
+
 int main(){
     RunTests<Unitary>("Unitary", {
         &MultiplyTest1,
@@ -117,7 +182,11 @@ int main(){
     // RunTests<QuantumState>("QuantumState", {
     // });
 
-    QuantumState qs(3, std::vector<std::complex<double>>(8, 1/sqrt(8)));
+    std::unordered_map<int, std::complex<double>> superposition;
+    for(int i = 0; i < 8; i++){
+        superposition[i] = 1/sqrt(8);
+    }
+    QuantumState qs(3, superposition);
     std::cout << qs << std::endl;
 
     std::vector<int> numMeasurements(8, 0);
@@ -133,16 +202,37 @@ int main(){
         cout << i << " ";
     }
     cout << std::endl;
-    
-    // QuantumState bell(2);
-    // bell[0b00] = 1/sqrt(2);
-    // bell[0b11] = -1/sqrt(2);
-    // cout << bell << std::endl;
-    // cout << bell.probability(0b00) << " " << bell.probability(0b01) << " " << bell.probability(0b10) << " " << bell.probability(0b11) << std::endl;
 
-    // std::cout << "MEASUREMENT:" << std::endl;
-    // cout << bell.measure() << std::endl;
-    // cout << bell << std::endl;
+    // make bell state, transform it to another bell state, then measure.
+    QuantumState bell(2, {{0b00, 1/sqrt(2)}, {0b11, 1/sqrt(2)}});
+    std::cout << bell << std::endl;
+    bell.applyUnitary(std::complex<double>(0, 1) * Unitary::Y(), {0});
+    cout << bell << "\n";
+
+    cout << bell.measure() << std::endl;
+    cout << bell << std::endl;
+
+    // generate epr pair
+    QuantumState epr(2);
+    epr.applyUnitary(Unitary::H(), {0});
+    epr.applyUnitary(Unitary::CNOT(), {0, 1});
+    std::cout << epr << std::endl;
+
+    // generate ghz state
+    QuantumState ghz(3);
+    ghz.applyUnitary(Unitary::H(), {0});
+    ghz.applyUnitary(Unitary::CNOT(), {0, 1});
+    ghz.applyUnitary(Unitary::CNOT(), {1, 2});
+    std::cout << ghz << std::endl;
+
+    // Running Deutsch-Jozsa algorithm with sample functions
+    vector<bool> fConstant(8, 1);
+    Unitary uConstant = makeOracle(fConstant);
+    std::cout << DeutschJozsa(uConstant) << std::endl;
+
+    vector<bool> fBalanced = {1, 0, 1, 1, 0, 0, 1, 0};
+    Unitary uBalanced = makeOracle(fBalanced);
+    std::cout << DeutschJozsa(uBalanced) << std::endl;
 
     return 0;
 }

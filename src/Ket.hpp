@@ -3,14 +3,19 @@
 
 #include <string>
 #include <ostream>
+#include <vector>
 
 class Ket{
     public:
-    const int qubitStates;
+    int qubitStates;
     const int numQubits;
 
     Ket(int _qubitStates, int _numQubits);
+
+    // Note: for get and set qubit, we use the convention that qubit 0 is the qubit that comes first (i.e the MOST signifigant bit). This makes circuit design easier.
     bool getQubit(int qubit) const;
+    void setQubit(int qubit, bool value);
+
     std::string toBinaryString() const;
     friend std::ostream& operator<<(std::ostream& os, const Ket& k);
 };

@@ -3,8 +3,8 @@
 
 Unitary::Unitary(Matrix _matrix): matrix(_matrix) {}
 
-Row& Unitary::operator[](int i){
-    return this->matrix[i];
+const Vector& Unitary::operator[](int i) const {
+    return matrix[i];
 }
 
 int Unitary::size() const {
@@ -26,12 +26,25 @@ Unitary Unitary::operator*(const Unitary& u) const {
     return v;
 }
 
+// Vector Unitary::operator*(const Vector& v) const {
+//     assert(this->size() == v.size());
+
+//     int n = this->size();
+//     Vector u(n, 0);
+//     for(int i = 0; i < n; i++){
+//         for(int j = 0; j < n; j++){
+//             u[i] += this->matrix[i][j] * v[j];
+//         }
+//     }
+//     return u;
+// }
+
 Unitary Unitary::operator*(const std::complex<double>& z) const {
-    int n = this->size();
+    int n = size();
     Unitary v = zero(n);
     for(int i = 0; i < n; i++){
         for(int j = 0; j < n; j++){
-            v.matrix[i][j] = this->matrix[i][j] * z;
+            v.matrix[i][j] = matrix[i][j] * z;
         }
     }
     return v;
@@ -62,36 +75,36 @@ Unitary Unitary::tensor(const Unitary& u) const{
 }
 
 Unitary Unitary::conjugate() const{
-    int n = this->size();
+    int n = size();
     Unitary v = zero(n);
     for(int i = 0; i < n; i++){
         for(int j = 0; j < n; j++){
-            v.matrix[i][j] = std::conj(this->matrix[i][j]);
+            v.matrix[i][j] = std::conj(matrix[i][j]);
         }
     }
     return v;
 }
 
 Unitary Unitary::transpose() const{
-    int n = this->size();
+    int n = size();
     Unitary v = zero(n);
     for(int i = 0; i < n; i++){
         for(int j = 0; j < n; j++){
-            v.matrix[i][j] = this->matrix[j][i];
+            v.matrix[i][j] = matrix[j][i];
         }
     }
     return v;
 }
 
 Unitary Unitary::controlled() const {
-    int n = this->size();
+    int n = size();
     Unitary u = zero(2 * n);
     for(int i = 0; i < n; i++){
         u.matrix[i][i] = 1;
     }
     for(int i = n; i < 2*n; i++){
         for(int j = n; j < 2*n; j++){
-            u.matrix[i][j] = this->matrix[i-n][j-n];
+            u.matrix[i][j] = matrix[i-n][j-n];
         }
     }
     return u;
@@ -115,7 +128,7 @@ std::ostream& operator<<(std::ostream& os, const Unitary& u){
 }
 
 Unitary Unitary::zero(int size){
-    return Matrix(size, Row(size, 0));
+    return Matrix(size, Vector(size, 0));
 }
 
 Unitary Unitary::identity(int size){
