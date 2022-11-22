@@ -170,7 +170,7 @@ Unitary Unitary::H(){
 Unitary Unitary::phase(double theta){
     return Unitary({
         {1, 0},
-        {0, std::exp(std::complex(0.0, theta))},
+        {0, std::exp(std::complex<double>(0, theta))},
     });
 }
 

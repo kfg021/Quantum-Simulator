@@ -132,9 +132,15 @@ string DeutschJozsa(const Unitary& oracle){
     for(int i = 0; i < n; i++){
         qs.applyUnitary(Unitary::H(), {i});
     }
-    cout << qs << "\n";
+    cout << "STATE AFTER UNITARIES: " << qs << std::endl;
 
-    Ket output = qs.measure();
+    vector<int> firstN;
+    for(int i = 0; i < n; i++){
+        firstN.push_back(i);
+    }
+    Ket output = qs.measure({firstN});
+    cout << "MEASUREMENT OUTPUT: " << output << std::endl;
+    cout << "REMAINING STATE: " << qs << std::endl;
     
     // if the first n qubits are 0 then the function was constant
     bool constant = true;
@@ -182,35 +188,36 @@ int main(){
     // RunTests<QuantumState>("QuantumState", {
     // });
 
-    std::unordered_map<int, std::complex<double>> superposition;
-    for(int i = 0; i < 8; i++){
-        superposition[i] = 1/sqrt(8);
-    }
-    QuantumState qs(3, superposition);
-    std::cout << qs << std::endl;
+    // std::unordered_map<int, std::complex<double>> superposition;
+    // for(int i = 0; i < 8; i++){
+    //     superposition[i] = 1/sqrt(8);
+    // }
+    // QuantumState qs(3, superposition);
+    // std::cout << qs << std::endl;
 
-    std::vector<int> numMeasurements(8, 0);
-    for(int i = 0; i < 1e6; i++){
-        QuantumState qscopy = qs;
-        numMeasurements[qscopy.measure().qubitStates]++;
-        if(i == 0){
-            cout << qscopy << std::endl;
-        }
-    }
-    // each entry of the vector should be roughly equal
-    for(int i : numMeasurements){
-        cout << i << " ";
-    }
-    cout << std::endl;
+    // std::vector<int> numMeasurements(8, 0);
+    // for(int i = 0; i < 1e5; i++){
+    //     QuantumState qscopy = qs;
+    //     numMeasurements[qscopy.measure({0, 1, 2}).getQubitStates()]++;
+    //     if(i == 0){
+    //         cout << qscopy << std::endl;
+    //     }
+    // }
+    // // each entry of the vector should be roughly equal
+    // for(int i : numMeasurements){
+    //     cout << i << " ";
+    // }
+    // cout << std::endl;
 
     // make bell state, transform it to another bell state, then measure.
     QuantumState bell(2, {{0b00, 1/sqrt(2)}, {0b11, 1/sqrt(2)}});
     std::cout << bell << std::endl;
     bell.applyUnitary(std::complex<double>(0, 1) * Unitary::Y(), {0});
-    cout << bell << "\n";
-
-    cout << bell.measure() << std::endl;
     cout << bell << std::endl;
+
+    cout << "BELL STATE MEASUREMENT RESULT: " << bell.measure({0, 1}) << std::endl;
+    cout << "STATE AFTER MEASUREMENT: " << bell << std::endl;
+    cout << std::endl;
 
     // generate epr pair
     QuantumState epr(2);
@@ -218,12 +225,7 @@ int main(){
     epr.applyUnitary(Unitary::CNOT(), {0, 1});
     std::cout << epr << std::endl;
 
-    // generate ghz state
-    QuantumState ghz(3);
-    ghz.applyUnitary(Unitary::H(), {0});
-    ghz.applyUnitary(Unitary::CNOT(), {0, 1});
-    ghz.applyUnitary(Unitary::CNOT(), {1, 2});
-    std::cout << ghz << std::endl;
+    cout << std::endl;
 
     // Running Deutsch-Jozsa algorithm with sample functions
     vector<bool> fConstant(8, 1);
@@ -233,6 +235,20 @@ int main(){
     vector<bool> fBalanced = {1, 0, 1, 1, 0, 0, 1, 0};
     Unitary uBalanced = makeOracle(fBalanced);
     std::cout << DeutschJozsa(uBalanced) << std::endl;
+
+    std::cout << std::endl;
+
+    // generate ghz state
+    QuantumState ghz(3);
+    ghz.applyUnitary(Unitary::H(), {0});
+    ghz.applyUnitary(Unitary::CNOT(), {0, 1});
+    ghz.applyUnitary(Unitary::CNOT(), {1, 2});
+    std::cout << ghz << std::endl;
+
+    //convert ghz to bell state by measuring qubit 2 in {+, -}
+    ghz.applyUnitary(Unitary::H(), {2});
+    std::cout << ghz.measure({2}) << std::endl;
+    std::cout << ghz << std::endl;
 
     return 0;
 }

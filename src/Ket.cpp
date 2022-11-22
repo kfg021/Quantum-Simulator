@@ -22,6 +22,18 @@ void Ket::setQubit(int qubit, bool value){
     }
 }
 
+int Ket::getQubitStates(){
+    return qubitStates;
+}
+
+void Ket::addQubit(bool value){
+    numQubits++;
+    qubitStates <<= 1;
+    if(value){
+        qubitStates |= 1;
+    }
+}
+
 std::string Ket::toBinaryString() const {
     int length = numQubits;
     std::string binaryString(length, '0');
