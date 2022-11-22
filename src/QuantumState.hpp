@@ -22,9 +22,6 @@ class QuantumState{
     std::complex<double> getCoefficient(int state) const;
     double probability(int state) const;
 
-    // // TODO: make it possible to choose the qubits to measure. Also maybe add support for measurements in bases other than {0, 1}.
-    // Ket measure();
-
     Ket measure(const std::vector<int>& qubitsToMeasure);
 
     void applyUnitary(const Unitary& u, const std::vector<int>& qubitsToApply);

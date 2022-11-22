@@ -24,27 +24,7 @@ double QuantumState::probability(int state) const {
     return std::norm(getCoefficient(state));
 }
 
-// Ket QuantumState::measure(){
-//     double rand = generateRandomDouble();
-//     double sum = 0;
-//     int numStates = (1 << qubits);
-//     for(int state = 0; state < numStates; state++){
-//         sum += probability(state);
-//         if(sum >= rand){
-//             superposition.clear();
-//             superposition[state] = 1;
-//             return Ket(state, qubits);
-//         }
-//     }
-
-//     // In theory should never happen since probabilities sum to 1, but might due to rounding errors. In this case just return the last state.
-//     superposition.clear();
-//     superposition[numStates-1] = 1;
-//     return Ket(numStates-1, qubits);
-// }
-
 Ket QuantumState::measure(const std::vector<int>& qubitsToMeasure){
-    // std::unordered_set<int> qubitsToMeasureSet(qubitsToMeasure.begin(), qubitsToMeasure.end());
     for(int i : qubitsToMeasure){
         assert(measuredQubits.find(i) == measuredQubits.end()); // make sure that we are not re-measuring a qubit.
         measuredQubits.insert(i);
@@ -62,23 +42,11 @@ Ket QuantumState::measure(const std::vector<int>& qubitsToMeasure){
 
         Ket allQubits(state, this->qubits);
         Ket measuredQubitValues(0, 0);
-        // Ket unmeasuredQubitValues(0, 0);
-
-        // for(int i = 0; i < this->qubits; i++){
-        //     if(qubitsToMeasureSet.find(i) != qubitsToMeasureSet.end()){
-        //         measuredQubitValues.addQubit(allQubits.getQubit(i));
-        //     }
-        //     else{
-        //         unmeasuredQubitValues.addQubit(allQubits.getQubit(i));
-        //     }
-        // }
-
         for(int i : qubitsToMeasure){
             measuredQubitValues.addQubit(allQubits.getQubit(i));
         }
 
         possibleOutcomes[measuredQubitValues.getQubitStates()].probability += this->probability(state);
-        // possibleOutcomes[measuredQubitValues.getQubitStates()].superposition[unmeasuredQubitValues.getQubitStates()] += coeff;
         possibleOutcomes[measuredQubitValues.getQubitStates()].superposition[state] += coeff;
     }
 
@@ -111,7 +79,6 @@ Ket QuantumState::measure(const std::vector<int>& qubitsToMeasure){
         coeff *= 1/sqrt(mo.probability);
     }
     this->superposition = mo.superposition;
-    // this->qubits = remainingSize;
     return Ket(state, measureSize);
 }
 
@@ -165,24 +132,6 @@ bool QuantumState::operator==(const QuantumState& qs) const {
 
 
 std::ostream& operator<<(std::ostream& os, const QuantumState& qs){
-    // TODO: figure out whether this should be reversed.
-    // struct compareReverse {
-    //     unsigned int reverse(int x) const {
-    //         unsigned int rev = 0;
-    //         for(int i = 0; i < 32; i++){
-    //             bool bit = (x >> (31 - i)) & 1;
-    //             if(bit){
-    //                 rev |= 1 << i;
-    //             }
-    //         }
-    //         return rev;
-    //     }
-    //     bool operator()(int a, int b) const{
-    //         return reverse(a) < reverse(b);
-    //     }
-    // };
-    // std::map<int, std::complex<double>, compareReverse> values;
-
     if((int)qs.measuredQubits.size() == qs.qubits){
         os << "EMPTY";
         return os;
