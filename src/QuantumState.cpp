@@ -2,13 +2,15 @@
 #include "Random.hpp"
 #include <cassert>
 #include <unordered_set>
-#include <map>
+// #include <map>
+
+#define map_type std::map
 
 QuantumState::QuantumState(int _qubits): qubits(_qubits) {
     superposition[0] = 1;
 }
 
-QuantumState::QuantumState(int _qubits, std::unordered_map<int, std::complex<double>> _superposition): qubits(_qubits), superposition(_superposition){}
+QuantumState::QuantumState(int _qubits, std::map<int, std::complex<double>> _superposition): qubits(_qubits), superposition(_superposition){}
 
 std::complex<double> QuantumState::getCoefficient(int state) const {
     auto iterator = superposition.find(state);
@@ -32,9 +34,9 @@ Ket QuantumState::measure(const std::vector<int>& qubitsToMeasure){
 
     struct MeasurementOutcome{
         double probability = 0;
-        std::unordered_map<int, std::complex<double>> superposition;
+        std::map<int, std::complex<double>> superposition;
     };
-    std::unordered_map<int, MeasurementOutcome> possibleOutcomes;
+    std::map<int, MeasurementOutcome> possibleOutcomes;
 
     for(const auto& entry : superposition){
         int state = entry.first;
@@ -54,6 +56,7 @@ Ket QuantumState::measure(const std::vector<int>& qubitsToMeasure){
     int remainingSize = this->qubits - measureSize;
 
     double rand = generateRandomDouble();
+    // std::cout << "OUR RANDOM NUMBER IS " << rand << std::endl;
     double sum = 0;
     for(auto& entry : possibleOutcomes){
         int state = entry.first;
@@ -90,7 +93,7 @@ void QuantumState::applyUnitary(const Unitary& u, const std::vector<int>& qubits
     int m = qubitsToApply.size();
     assert((1 << m) == u.size());
 
-    std::unordered_map<int, std::complex<double>> unitaryResult;
+    std::map<int, std::complex<double>> unitaryResult;
     for(const auto& entry : superposition){
         int state = entry.first;
         std::complex<double> coeff = entry.second;
@@ -137,12 +140,13 @@ std::ostream& operator<<(std::ostream& os, const QuantumState& qs){
         return os;
     }
 
-    std::map<int, std::complex<double>> values;
-    for(const auto& entry : qs.superposition){
-        int state = entry.first;
-        std::complex<double> coeff = entry.second;
-        values[state] = coeff;
-    }
+    const std::map<int, std::complex<double>>& values = qs.superposition;
+    // std::map<int, std::complex<double>> values;
+    // for(const auto& entry : qs.superposition){
+    //     int state = entry.first;
+    //     std::complex<double> coeff = entry.second;
+    //     values[state] = coeff;
+    // }
     for(auto iterator = values.begin(); iterator != values.end(); iterator++){
         if(iterator != values.begin()){
             os << " + ";

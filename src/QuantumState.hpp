@@ -6,18 +6,23 @@
 #include <vector>
 #include <complex>
 #include <ostream>
-#include <unordered_map>
+#include <map>
+// #include <unordered_map>
 #include <unordered_set>
 
 class QuantumState{
     private:
     const int qubits;
-    std::unordered_map<int, std::complex<double>> superposition;
+
+    // Right now we are using a map to store the superposition of states. This makes the code easier to debug since the order of the states is deterministic.
+    // May change this to an unordered_map in the future for performance reasons.
+    std::map<int, std::complex<double>> superposition; 
+
     std::unordered_set<int> measuredQubits;
 
     public:
     QuantumState(int _qubits);
-    QuantumState(int _qubits, std::unordered_map<int, std::complex<double>> _superposition);
+    QuantumState(int _qubits, std::map<int, std::complex<double>> _superposition);
     
     std::complex<double> getCoefficient(int state) const;
     double probability(int state) const;
