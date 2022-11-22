@@ -1,6 +1,7 @@
 #include "Unitary.hpp"
 #include <cassert>
 
+// TODO: rename this to SquareMatrix and make it mutable. Only test for unitary when applying to quantum circuit.
 Unitary::Unitary(Matrix _matrix): matrix(_matrix) {}
 
 const Vector& Unitary::operator[](int i) const {

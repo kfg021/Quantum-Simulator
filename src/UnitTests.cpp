@@ -2,6 +2,7 @@
 #include "QuantumState.hpp"
 #include "Test.hpp"
 #include <iostream>
+#include <iomanip>
 
 // Most of these tests are not actually unitary. But it's just easier to write tests for whole numbers.
 TestObject<Unitary> MultiplyTest1(){
@@ -108,8 +109,8 @@ int myLog(int x){
     return log;
 }
 
-// Requirements: f(x) is constant or balanced; oracle(|x>|y>) = |x>|y xor f(x)>
-string DeutschJozsa(const Unitary& oracle){
+// Requirements: domain(f) = {0, 1, ..., 2^n}; range(f) = {0, 1}; f(x) is constant or balanced; oracle(|x>|y>) = |x>|y xor f(x)>. Outputs whether f is constant or balanced.
+std::string DeutschJozsa(const Unitary& oracle){
     int n = myLog(oracle.size()) - 1;
 
     // initialize first n qubits to 0 and last to 1
@@ -122,7 +123,7 @@ string DeutschJozsa(const Unitary& oracle){
     }
 
     // apply the oracle
-    vector<int> all;
+    std::vector<int> all;
     for(int i = 0; i < n+1; i++){
         all.push_back(i);
     }
@@ -132,15 +133,15 @@ string DeutschJozsa(const Unitary& oracle){
     for(int i = 0; i < n; i++){
         qs.applyUnitary(Unitary::H(), {i});
     }
-    cout << "STATE AFTER UNITARIES: " << qs << std::endl;
+    std::cout << "STATE AFTER UNITARIES: " << qs << std::endl;
 
-    vector<int> firstN;
+    std::vector<int> firstN;
     for(int i = 0; i < n; i++){
         firstN.push_back(i);
     }
     Ket output = qs.measure({firstN});
-    cout << "MEASUREMENT OUTPUT: " << output << std::endl;
-    cout << "REMAINING STATE: " << qs << std::endl;
+    std::cout << "MEASUREMENT OUTPUT: " << output << std::endl;
+    std::cout << "REMAINING STATE: " << qs << std::endl;
     
     // if the first n qubits are 0 then the function was constant
     bool constant = true;
@@ -158,7 +159,7 @@ string DeutschJozsa(const Unitary& oracle){
     }
 }
 
-Unitary makeOracle(const vector<bool>& f){
+Unitary makeDeutschJozsaOracle(const std::vector<bool>& f){
     int n = f.size();
     int m = myLog(n);
     Matrix oracle(2*n, Vector(2*n, 0));
@@ -169,6 +170,71 @@ Unitary makeOracle(const vector<bool>& f){
         oracle[i][output] = 1;
     }
     return Unitary(oracle);
+}
+
+// Requirements: domain(f) = {0, 1, ..., 2^n}; range(f) = {0, 1}; oracle(|x>) = ((-1)^f(x))|x>; numAnswers = number of x's where f(x) = 1. With high probability, outputs some x such that f(x) = 1.
+int Grover(const Unitary& oracle, int numAnswers){
+    int N = oracle.size();
+    int n = myLog(N);
+    QuantumState qs(n);
+
+    //hadamard transform
+    for(int i = 0; i < n; i++){
+        qs.applyUnitary(Unitary::H(), {i});
+    }
+
+    std::vector<int> all;
+    for(int i = 0; i < n; i++){
+        all.push_back(i);
+    }
+
+    Matrix m(N, Vector(N, 0));
+    m[0][0] = -1;
+    for(int i = 1; i < N; i++){
+        m[i][i] = 1;
+    }
+    Unitary groverUnitary(m);
+
+    static const double PI_OVER_4 = atan(1);
+    double ratio = (double)N / numAnswers;
+    double iterations = PI_OVER_4 * sqrt(ratio);
+    int roundedIterations = (int)round(iterations);
+    for(int i = 0; i < roundedIterations; i++){
+        // apply oracle
+        qs.applyUnitary(oracle, all);
+
+        // apply grover diffusion operator:
+            // 1) hadamard transform
+            for(int i = 0; i < n; i++){
+                qs.applyUnitary(Unitary::H(), {i});
+            }
+
+            // 2) Apply 2|0^n><0^n| - I
+            qs.applyUnitary(groverUnitary, all);
+
+            // 3) hadamard transform
+            for(int i = 0; i < n; i++){
+                qs.applyUnitary(Unitary::H(), {i});
+            }
+    }
+    // std::cout << qs << std::endl;
+
+    Ket output = qs.measure(all);
+    return output.getQubitStates();
+}
+
+Unitary makeGroverOracle(const std::vector<int>& f){
+    int n = f.size();
+    Matrix m(n, Vector(n, 0));
+    for(int i = 0; i < n; i++){
+        if(f[i]){
+            m[i][i] = -1;
+        }
+        else{
+            m[i][i] = 1;
+        }
+    }
+    return Unitary(m);
 }
 
 int main(){
@@ -185,39 +251,15 @@ int main(){
         &ControlledUnitaryTest2,
     });
 
-    // RunTests<QuantumState>("QuantumState", {
-    // });
-
-    // std::unordered_map<int, std::complex<double>> superposition;
-    // for(int i = 0; i < 8; i++){
-    //     superposition[i] = 1/sqrt(8);
-    // }
-    // QuantumState qs(3, superposition);
-    // std::cout << qs << std::endl;
-
-    // std::vector<int> numMeasurements(8, 0);
-    // for(int i = 0; i < 1e5; i++){
-    //     QuantumState qscopy = qs;
-    //     numMeasurements[qscopy.measure({0, 1, 2}).getQubitStates()]++;
-    //     if(i == 0){
-    //         cout << qscopy << std::endl;
-    //     }
-    // }
-    // // each entry of the vector should be roughly equal
-    // for(int i : numMeasurements){
-    //     cout << i << " ";
-    // }
-    // cout << std::endl;
-
     // make bell state, transform it to another bell state, then measure.
     QuantumState bell(2, {{0b00, 1/sqrt(2)}, {0b11, 1/sqrt(2)}});
     std::cout << bell << std::endl;
     bell.applyUnitary(std::complex<double>(0, 1) * Unitary::Y(), {0});
-    cout << bell << std::endl;
+    std::cout << bell << std::endl;
 
-    cout << "BELL STATE MEASUREMENT RESULT: " << bell.measure({0, 1}) << std::endl;
-    cout << "STATE AFTER MEASUREMENT: " << bell << std::endl;
-    cout << std::endl;
+    std::cout << "BELL STATE MEASUREMENT RESULT: " << bell.measure({0, 1}) << std::endl;
+    std::cout << "STATE AFTER MEASUREMENT: " << bell << std::endl;
+    std::cout << std::endl;
 
     // generate epr pair
     QuantumState epr(2);
@@ -225,15 +267,15 @@ int main(){
     epr.applyUnitary(Unitary::CNOT(), {0, 1});
     std::cout << epr << std::endl;
 
-    cout << std::endl;
+    std::cout << std::endl;
 
     // Running Deutsch-Jozsa algorithm with sample functions
-    vector<bool> fConstant(8, 1);
-    Unitary uConstant = makeOracle(fConstant);
+    std::vector<bool> fConstant(8, 1);
+    Unitary uConstant = makeDeutschJozsaOracle(fConstant);
     std::cout << DeutschJozsa(uConstant) << std::endl;
 
-    vector<bool> fBalanced = {1, 0, 1, 1, 0, 0, 1, 0};
-    Unitary uBalanced = makeOracle(fBalanced);
+    std::vector<bool> fBalanced = {1, 0, 1, 1, 0, 0, 1, 0};
+    Unitary uBalanced = makeDeutschJozsaOracle(fBalanced);
     std::cout << DeutschJozsa(uBalanced) << std::endl;
 
     std::cout << std::endl;
@@ -250,5 +292,14 @@ int main(){
     std::cout << ghz.measure({2}) << std::endl;
     std::cout << ghz << std::endl;
 
+    std::cout << std::endl;
+
+    // Test Grover's algorithm on a function with a 6 bit input and 1 valid answer.
+    std::vector<int> f(1 << 6, 0);
+    f[45] = 1;
+    Unitary oracle = makeGroverOracle(f);
+    int ans = Grover(oracle, 1);
+    std::cout << "RESULT OF GROVER'S ALGORITHM: " << ans << std::endl;
+    
     return 0;
 }
