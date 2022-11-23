@@ -2,6 +2,7 @@
 #include "QuantumRegister.hpp"
 #include "Algorithms.hpp"
 #include "Test.hpp"
+#include "Math.hpp"
 #include <iostream>
 #include <iomanip>
 
@@ -119,7 +120,7 @@ int main(){
     // make bell state, transform it to another bell state, then measure.
     QuantumRegister bell(2, {{0b00, 1/sqrt(2)}, {0b11, 1/sqrt(2)}});
     std::cout << bell << std::endl;
-    bell.applyUnitary(std::complex<double>(0, 1) * Unitary::Y(), {0});
+    bell.applyUnitary(1i * Unitary::Y(), {0});
     std::cout << bell << std::endl;
 
     std::cout << "BELL STATE MEASUREMENT RESULT: " << bell.measure({0, 1}) << std::endl;
@@ -167,6 +168,10 @@ int main(){
     Unitary oracle = makeGroverOracle(f);
     int ans = Grover(oracle, 1);
     std::cout << "RESULT OF GROVER'S ALGORITHM: " << ans << std::endl;
+
+    std::cout << std::endl;
+
+    std::cout << Unitary::IQFT(3) << std::endl;
     
     return 0;
 }

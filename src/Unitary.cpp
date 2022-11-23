@@ -1,4 +1,5 @@
 #include "Unitary.hpp"
+#include "Math.hpp"
 #include <cassert>
 
 Unitary::Unitary(Matrix _matrix): matrix(_matrix) {}
@@ -194,4 +195,28 @@ Unitary Unitary::Toffoli(){
         {0, 0, 0, 0, 0, 0, 0, 1},
         {0, 0, 0, 0, 0, 0, 1, 0},
     });
+}
+
+Unitary Unitary::QFT(int numQubits){
+    /*
+    On a real quantum computer, the QFT would almost certianly not be implemented as one large unitary, and would instead be implemented as
+    a combination of one and two-qubit gates. However, for simplicity, (and computational efficiency), we implemement it here as an NxN matrix, where N = 2^numQubits.
+    */
+    int N = 1 << numQubits;
+    Matrix m(N, Vector(N, 0));
+    std::complex<double> omega = std::exp((2 * PI * 1i) / std::complex<double>(N, 0));
+    for(int i = 0; i < N; i++){
+        for(int j = 0; j < N; j++){
+            m[i][j] = pow(omega, i*j);
+        }
+    }
+    return (1.0/sqrt(N)) * Unitary(m);
+}
+
+Unitary Unitary::IQFT(int numQubits){
+    /*
+    On a real quantum computer, the IQFT would almost certianly not be implemented as one large unitary, and would instead be implemented as
+    a combination of one and two-qubit gates. However, for simplicity, (and computational efficiency), we implemement it here as an NxN matrix, where N = 2^numQubits.
+    */
+    return QFT(numQubits).conjugate().transpose();
 }

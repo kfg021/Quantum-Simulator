@@ -51,4 +51,6 @@ This function assumes that f is given as a boolean vector of size 2^n for some p
 */
 Unitary makeGroverOracle(const std::vector<bool>& f);
 
+std::pair<int, int> Shor(int N);
+
 #endif

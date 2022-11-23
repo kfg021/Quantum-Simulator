@@ -1,16 +1,8 @@
 #include "Algorithms.hpp"
 #include "QuantumRegister.hpp"
-
-const double PI = 4.0 * atan(1);
-
-int integerLog2(int x){
-    int log = 0;
-    while(x > 1){
-        log++;
-        x >>= 1;
-    }
-    return log;
-}
+#include "Math.hpp"
+#include "Random.hpp"
+#include <algorithm>
 
 DeutschJozsaResult DeutschJozsa(const Unitary& oracle){
     // n is the number of bits that f takes as input.
@@ -133,4 +125,22 @@ Unitary makeGroverOracle(const std::vector<bool>& f){
         }
     }
     return Unitary(m);
+}
+
+std::pair<int, int> Shor(int N){
+    int a = generateRandomInt(1, N);
+    int K = gcd(a, N);
+    if(K != 1){
+        std::cout << "We found an answer, but using classical methods." << std::endl;
+        return {K, N/K};
+    }
+
+    // Find the number of qubits for the inverse QFT
+    int q = 0;
+    while((1 << q) < N*N){
+        q++;
+    }
+    int n = integerLog2(N) + 1;
+
+    return {1, N};
 }
