@@ -4,8 +4,6 @@
 #include <unordered_set>
 // #include <map>
 
-#define map_type std::map
-
 QuantumRegister::QuantumRegister(int _qubits): qubits(_qubits) {
     superposition[0] = 1;
 }
