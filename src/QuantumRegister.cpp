@@ -1,4 +1,4 @@
-#include "QuantumState.hpp"
+#include "QuantumRegister.hpp"
 #include "Random.hpp"
 #include <cassert>
 #include <unordered_set>
@@ -6,13 +6,13 @@
 
 #define map_type std::map
 
-QuantumState::QuantumState(int _qubits): qubits(_qubits) {
+QuantumRegister::QuantumRegister(int _qubits): qubits(_qubits) {
     superposition[0] = 1;
 }
 
-QuantumState::QuantumState(int _qubits, std::map<int, std::complex<double>> _superposition): qubits(_qubits), superposition(_superposition){}
+QuantumRegister::QuantumRegister(int _qubits, std::map<int, std::complex<double>> _superposition): qubits(_qubits), superposition(_superposition){}
 
-std::complex<double> QuantumState::getCoefficient(int state) const {
+std::complex<double> QuantumRegister::getCoefficient(int state) const {
     auto iterator = superposition.find(state);
     if(iterator != superposition.end()){
         return iterator->second;
@@ -22,11 +22,11 @@ std::complex<double> QuantumState::getCoefficient(int state) const {
     }
 }
 
-double QuantumState::probability(int state) const {
+double QuantumRegister::probability(int state) const {
     return std::norm(getCoefficient(state));
 }
 
-Ket QuantumState::measure(const std::vector<int>& qubitsToMeasure){
+Ket QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
     for(int i : qubitsToMeasure){
         assert(measuredQubits.find(i) == measuredQubits.end()); // make sure that we are not re-measuring a qubit.
         measuredQubits.insert(i);
@@ -85,7 +85,7 @@ Ket QuantumState::measure(const std::vector<int>& qubitsToMeasure){
     return Ket(state, measureSize);
 }
 
-void QuantumState::applyUnitary(const Unitary& u, const std::vector<int>& qubitsToApply){
+void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qubitsToApply){
     for(int i : qubitsToApply){
         assert(measuredQubits.find(i) == measuredQubits.end()); // make sure that we are not applying a unitary to a qubit we already measured.
     }
@@ -129,12 +129,12 @@ void QuantumState::applyUnitary(const Unitary& u, const std::vector<int>& qubits
     }
 }
 
-bool QuantumState::operator==(const QuantumState& qs) const {
+bool QuantumRegister::operator==(const QuantumRegister& qs) const {
     return superposition == qs.superposition;
 }
 
 
-std::ostream& operator<<(std::ostream& os, const QuantumState& qs){
+std::ostream& operator<<(std::ostream& os, const QuantumRegister& qs){
     if((int)qs.measuredQubits.size() == qs.qubits){
         os << "EMPTY";
         return os;

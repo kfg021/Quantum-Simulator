@@ -1,5 +1,5 @@
 #include "Unitary.hpp"
-#include "QuantumState.hpp"
+#include "QuantumRegister.hpp"
 #include "Test.hpp"
 #include <iostream>
 #include <iomanip>
@@ -114,7 +114,7 @@ std::string DeutschJozsa(const Unitary& oracle){
     int n = myLog(oracle.size()) - 1;
 
     // initialize first n qubits to 0 and last to 1
-    QuantumState qs(n+1);
+    QuantumRegister qs(n+1);
     qs.applyUnitary(Unitary::X(), {n});
 
     // hadamard transform on all qubits
@@ -176,7 +176,7 @@ Unitary makeDeutschJozsaOracle(const std::vector<bool>& f){
 int Grover(const Unitary& oracle, int numAnswers){
     int N = oracle.size();
     int n = myLog(N);
-    QuantumState qs(n);
+    QuantumRegister qs(n);
 
     //hadamard transform
     for(int i = 0; i < n; i++){
@@ -238,6 +238,7 @@ Unitary makeGroverOracle(const std::vector<int>& f){
 }
 
 int main(){
+
     RunTests<Unitary>("Unitary", {
         &MultiplyTest1,
         &MultiplyTest2,
@@ -252,7 +253,7 @@ int main(){
     });
 
     // make bell state, transform it to another bell state, then measure.
-    QuantumState bell(2, {{0b00, 1/sqrt(2)}, {0b11, 1/sqrt(2)}});
+    QuantumRegister bell(2, {{0b00, 1/sqrt(2)}, {0b11, 1/sqrt(2)}});
     std::cout << bell << std::endl;
     bell.applyUnitary(std::complex<double>(0, 1) * Unitary::Y(), {0});
     std::cout << bell << std::endl;
@@ -262,7 +263,7 @@ int main(){
     std::cout << std::endl;
 
     // generate epr pair
-    QuantumState epr(2);
+    QuantumRegister epr(2);
     epr.applyUnitary(Unitary::H(), {0});
     epr.applyUnitary(Unitary::CNOT(), {0, 1});
     std::cout << epr << std::endl;
@@ -281,7 +282,7 @@ int main(){
     std::cout << std::endl;
 
     // generate ghz state
-    QuantumState ghz(3);
+    QuantumRegister ghz(3);
     ghz.applyUnitary(Unitary::H(), {0});
     ghz.applyUnitary(Unitary::CNOT(), {0, 1});
     ghz.applyUnitary(Unitary::CNOT(), {1, 2});

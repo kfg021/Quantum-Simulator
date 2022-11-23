@@ -9,6 +9,7 @@
 using Vector = std::vector<std::complex<double>>;
 using Matrix = std::vector<Vector>;
 
+// TODO: rename this to SquareMatrix and make it mutable. Only test for unitary when applying to quantum circuit. (And maybe only do this check on a "debug" mode)
 class Unitary{
     private:
     Matrix matrix;

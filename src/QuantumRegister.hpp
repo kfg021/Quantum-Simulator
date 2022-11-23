@@ -1,5 +1,5 @@
-#ifndef QUANTUM_STATE_HPP
-#define QUANTUM_STATE_HPP
+#ifndef QUANTUM_REGISTER_HPP
+#define QUANTUM_REGISTER_HPP
 
 #include "Unitary.hpp"
 #include "Ket.hpp"
@@ -10,7 +10,7 @@
 // #include <unordered_map>
 #include <unordered_set>
 
-class QuantumState{
+class QuantumRegister{
     private:
     const int qubits;
 
@@ -21,8 +21,8 @@ class QuantumState{
     std::unordered_set<int> measuredQubits;
 
     public:
-    QuantumState(int _qubits);
-    QuantumState(int _qubits, std::map<int, std::complex<double>> _superposition);
+    QuantumRegister(int _qubits);
+    QuantumRegister(int _qubits, std::map<int, std::complex<double>> _superposition);
     
     std::complex<double> getCoefficient(int state) const;
     double probability(int state) const;
@@ -31,9 +31,9 @@ class QuantumState{
 
     void applyUnitary(const Unitary& u, const std::vector<int>& qubitsToApply);
 
-    bool operator==(const QuantumState& qs) const;
+    bool operator==(const QuantumRegister& qs) const;
 
-    friend std::ostream& operator<<(std::ostream& os, const QuantumState& qs);
+    friend std::ostream& operator<<(std::ostream& os, const QuantumRegister& qs);
 };
 
 #endif

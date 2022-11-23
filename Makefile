@@ -21,3 +21,6 @@ clean:
 	rm -f $(OBJ_DIR)/*.o
 	rm -f $(OBJ_DIR)/*.d
 
+# g++ = clang
+# g++-12 = g++
+# NOTE: we can compile simply with g++ -std=c++14 -o test src/*.cpp
