@@ -3,6 +3,7 @@
 
 #include "Unitary.hpp"
 #include "Ket.hpp"
+#include "Bijection.hpp"
 #include <vector>
 #include <complex>
 #include <ostream>
@@ -30,6 +31,9 @@ class QuantumRegister{
     Ket measure(const std::vector<int>& qubitsToMeasure);
 
     void applyUnitary(const Unitary& u, const std::vector<int>& qubitsToApply);
+
+    // TODO: need to implement a function called applyBijection that accepts a lookupTable
+    void applyBijection(const Bijection& f, const std::vector<int>& qubitsToApply);
 
     bool operator==(const QuantumRegister& qr) const;
 
