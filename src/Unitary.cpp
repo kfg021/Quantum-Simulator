@@ -45,7 +45,7 @@ Unitary Unitary::operator*(const std::complex<double>& z) const {
     Unitary v = zero(n);
     for(int i = 0; i < n; i++){
         for(int j = 0; j < n; j++){
-            v.matrix[i][j] = matrix[i][j] * z;
+            v.matrix[i][j] = this->matrix[i][j] * z;
         }
     }
     return v;
@@ -105,7 +105,7 @@ Unitary Unitary::controlled() const {
     }
     for(int i = n; i < 2*n; i++){
         for(int j = n; j < 2*n; j++){
-            u.matrix[i][j] = matrix[i-n][j-n];
+            u.matrix[i][j] = this->matrix[i-n][j-n];
         }
     }
     return u;
@@ -200,23 +200,26 @@ Unitary Unitary::Toffoli(){
 Unitary Unitary::QFT(int numQubits){
     /*
     On a real quantum computer, the QFT would almost certianly not be implemented as one large unitary, and would instead be implemented as
-    a combination of one and two-qubit gates. However, for simplicity, (and computational efficiency), we implemement it here as an NxN matrix, where N = 2^numQubits.
+    a combination of one and two-qubit gates. However, for simplicity, we implemement it here as an NxN matrix, where N = 2^numQubits.
     */
     int N = 1 << numQubits;
     Matrix m(N, Vector(N, 0));
-    std::complex<double> omega = std::exp((2 * PI * 1i) / std::complex<double>(N, 0));
+    // std::complex<double> omega = std::exp((-2.0 * PI * 1i) / std::complex<double>(N, 0));
     for(int i = 0; i < N; i++){
         for(int j = 0; j < N; j++){
-            m[i][j] = pow(omega, i*j);
+            std::complex<double> omegaij = std::exp((-2 * i * j * PI * 1i) / std::complex<double>(N, 0));
+            m[i][j] = omegaij;
+            // m[i][j] = pow(omega, i*j);
         }
     }
+
     return (1.0/sqrt(N)) * Unitary(m);
 }
 
 Unitary Unitary::IQFT(int numQubits){
     /*
     On a real quantum computer, the IQFT would almost certianly not be implemented as one large unitary, and would instead be implemented as
-    a combination of one and two-qubit gates. However, for simplicity, (and computational efficiency), we implemement it here as an NxN matrix, where N = 2^numQubits.
+    a combination of one and two-qubit gates. However, for simplicity, we implemement it here as an NxN matrix, where N = 2^numQubits.
     */
     return QFT(numQubits).conjugate().transpose();
 }

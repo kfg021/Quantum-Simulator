@@ -31,9 +31,9 @@ class QuantumRegister{
 
     void applyUnitary(const Unitary& u, const std::vector<int>& qubitsToApply);
 
-    bool operator==(const QuantumRegister& qs) const;
+    bool operator==(const QuantumRegister& qr) const;
 
-    friend std::ostream& operator<<(std::ostream& os, const QuantumRegister& qs);
+    friend std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr);
 };
 
 #endif

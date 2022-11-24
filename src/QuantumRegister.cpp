@@ -4,6 +4,8 @@
 #include <unordered_set>
 // #include <map>
 
+const double MIN_PROBABILITY = 1e-20;
+
 QuantumRegister::QuantumRegister(int _qubits): qubits(_qubits) {
     superposition[0] = 1;
 }
@@ -104,7 +106,7 @@ void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qub
 
         for(int j = 0; j < (int)u.size(); j++){
             int i = relevantQubits.getQubitStates();
-            if(u[i][j] != std::complex<double>(0,0)){
+            if(u[i][j] != 0.0){
                 std::complex<double> newCoeff = coeff * u[i][j];
                 Ket appliedQubits(j, m);
                 Ket allQubits(state, this->qubits);
@@ -121,24 +123,33 @@ void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qub
     for(const auto& entry : unitaryResult){
         int state = entry.first;
         std::complex<double> coeff = entry.second;
-        if(coeff != 0.0){
+        
+        // std::cout << "STATE " << state << ", COEFF " << coeff << std::endl;
+        double prob = std::norm(coeff);
+        // if(coeff != 0.0){
+        if(prob >= MIN_PROBABILITY){
             superposition[state] = coeff;
         }
+        else{
+            std::cout << "State " << state << " is very unlikely (probability " << prob << "), so deleting." << std::endl;
+        }
     }
+
+    // std::cout << "THE STATE AFTER UNITARY IS " << *this << std::endl;
 }
 
-bool QuantumRegister::operator==(const QuantumRegister& qs) const {
-    return superposition == qs.superposition;
+bool QuantumRegister::operator==(const QuantumRegister& qr) const {
+    return superposition == qr.superposition;
 }
 
 
-std::ostream& operator<<(std::ostream& os, const QuantumRegister& qs){
-    if((int)qs.measuredQubits.size() == qs.qubits){
+std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr){
+    if((int)qr.measuredQubits.size() == qr.qubits){
         os << "EMPTY";
         return os;
     }
 
-    const std::map<int, std::complex<double>>& values = qs.superposition;
+    const std::map<int, std::complex<double>>& values = qr.superposition;
     // std::map<int, std::complex<double>> values;
     // for(const auto& entry : qs.superposition){
     //     int state = entry.first;
@@ -152,14 +163,15 @@ std::ostream& operator<<(std::ostream& os, const QuantumRegister& qs){
         int state = iterator->first;
         std::complex<double> coeff = iterator->second;
 
-        Ket allQubits(state, qs.qubits);
+        Ket allQubits(state, qr.qubits);
         Ket unmeasuredQubits(0, 0);
-        for(int i = 0; i < qs.qubits; i++){
+        for(int i = 0; i < qr.qubits; i++){
             // only print out the qubit if it has not already been measured.
-            if(qs.measuredQubits.find(i) == qs.measuredQubits.end()){
+            if(qr.measuredQubits.find(i) == qr.measuredQubits.end()){
                 unmeasuredQubits.addQubit(allQubits.getQubit(i));
             }
         }
+
         os << coeff << unmeasuredQubits;
     }
     return os;

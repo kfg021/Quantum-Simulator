@@ -3,18 +3,19 @@
 #include "Math.hpp"
 #include "Random.hpp"
 #include <algorithm>
+#include <cassert>
 
 DeutschJozsaResult DeutschJozsa(const Unitary& oracle){
     // n is the number of bits that f takes as input.
     int n = integerLog2(oracle.size()) - 1;
 
     // Create a quantum register with n+1 qubits. Initalize the first n to 0 and the last to 1.
-    QuantumRegister qs(n+1);
-    qs.applyUnitary(Unitary::X(), {n});
+    QuantumRegister qr(n+1);
+    qr.applyUnitary(Unitary::X(), {n});
 
     // Apply a Hadamard transform to all qubits.
     for(int i = 0; i < n+1; i++){
-        qs.applyUnitary(Unitary::H(), {i});
+        qr.applyUnitary(Unitary::H(), {i});
     }
 
     // Apply the oracle
@@ -22,11 +23,11 @@ DeutschJozsaResult DeutschJozsa(const Unitary& oracle){
     for(int i = 0; i < n+1; i++){
         all.push_back(i);
     }
-    qs.applyUnitary(oracle, all);
+    qr.applyUnitary(oracle, all);
 
     // Apply a Hadamard transform on the first n qubits.
     for(int i = 0; i < n; i++){
-        qs.applyUnitary(Unitary::H(), {i});
+        qr.applyUnitary(Unitary::H(), {i});
     }
 
     // Measure the first n qubits.
@@ -34,7 +35,7 @@ DeutschJozsaResult DeutschJozsa(const Unitary& oracle){
     for(int i = 0; i < n; i++){
         firstN.push_back(i);
     }
-    Ket output = qs.measure(firstN);
+    Ket output = qr.measure(firstN);
     
     // If we measured all n qubits to be 0, then the function is constant. Otherwise it is balanced.
     if(output.getQubitStates() == 0){
@@ -64,11 +65,11 @@ int Grover(const Unitary& oracle, int numAnswers){
     int n = integerLog2(N);
 
     // Create a quantum register with n qubits, all set to 0.
-    QuantumRegister qs(n);
+    QuantumRegister qr(n);
 
     // Apply a Hadamard transform to all qubits.
     for(int i = 0; i < n; i++){
-        qs.applyUnitary(Unitary::H(), {i});
+        qr.applyUnitary(Unitary::H(), {i});
     }
 
     std::vector<int> all;
@@ -89,26 +90,26 @@ int Grover(const Unitary& oracle, int numAnswers){
     int roundedIterations = (int)round(iterations);
     for(int i = 0; i < roundedIterations; i++){
         // Apply the oracle
-        qs.applyUnitary(oracle, all);
+        qr.applyUnitary(oracle, all);
 
         // Apply the Grover diffusion operator in three steps:
 
         // 1) First we apply a Hadamard transform to all qubits
         for(int i = 0; i < n; i++){
-            qs.applyUnitary(Unitary::H(), {i});
+            qr.applyUnitary(Unitary::H(), {i});
         }
 
         // 2) Next we apply the matrix 2|0^n><0^n| - I
-        qs.applyUnitary(groverUnitary, all);
+        qr.applyUnitary(groverUnitary, all);
 
         // 3) Lastly we apply another Hadamard transform to all qubits
         for(int i = 0; i < n; i++){
-            qs.applyUnitary(Unitary::H(), {i});
+            qr.applyUnitary(Unitary::H(), {i});
         }
     }
 
     // We measure all n qubits. With high probability, the output of these qubits in binary will give us a valid x such that f(x) = 1.
-    Ket output = qs.measure(all);
+    Ket output = qr.measure(all);
     return output.getQubitStates();
 }
 
@@ -127,20 +128,133 @@ Unitary makeGroverOracle(const std::vector<bool>& f){
     return Unitary(m);
 }
 
+Unitary makeShorUnitary(int a, int k, int N, int matrixSize){
+    // Build the unitary Ua^(2^k), which takes the state |x> to the state |a^(2^k) x (mod N)>.
+    Matrix m(matrixSize, Vector(matrixSize, 0));
+    for(int x = 0; x < matrixSize; x++){
+        m[x][(integerPowerMod(a, 1LL << k, N) * x) % N] = 1;
+    }
+   return Unitary(m);
+}
+/*
+Given the values of N and a, this algorithm finds the period of the function f(x) = a^x (mod N),
+That is, the smallest r > 0 such that a^r = 1 (mod N). 
+*/
+Ket ShorQuantumSubroutine(int N, int a, int q, int n){
+
+    // std::cout << q << " " << n << "\n";
+
+    // Initialize the quantum register with q+n qubits. We also need to set the last qubit to 1.
+    QuantumRegister qr(q+n);
+    qr.applyUnitary(Unitary::X(), {q+n-1});
+
+    // Apply a Hadamard transform to the first q qubits.
+    for(int i = 0; i < q; i++){
+        qr.applyUnitary(Unitary::H(), {i});
+    }
+
+    for(int i = 0; i < q; i++){
+        std::cout << "APPLYING UNITARY " << i+1 << "/" << q << std::endl;
+        // We need to apply a controlled Ua^(2^k) gate to the last n qubits. Our control qubit starts at q-1 and goes to 0 as we run through the loop.
+        std::vector<int> qubitsToApply;
+        qubitsToApply.push_back(q-1-i);
+        for(int j = q; j < q+n; j++){
+            qubitsToApply.push_back(j);
+        }
+
+        // Apply the unitary Ua^(2^k) which takes |x> to |a^(2^k) x (mod N)> .
+        int matrixSize = 1 << n;
+        Unitary ua2k = makeShorUnitary(a, i, N, matrixSize);
+        qr.applyUnitary(ua2k.controlled(), qubitsToApply);
+    }
+
+    std::cout << "STARTING QFT..." << std::endl;
+    // Now we need to apply an inverse QFT on the first q qubits.
+    std::vector<int> firstQ;
+    for(int i = 0; i < q; i++){
+        firstQ.push_back(i);
+    }
+    qr.applyUnitary(Unitary::IQFT(q), firstQ);
+
+    // std::cout << qr << std::endl;
+
+    // Now we measure the first q qubits.
+    Ket output = qr.measure(firstQ);
+
+    // std::cout << (double)output.getQubitStates() / (1 << q) << " should be close to c / r\n";
+    return output;
+}
+
 std::pair<int, int> Shor(int N){
-    int a = generateRandomInt(1, N);
+    std::pair<int, int> ans = {-1, -1};
+    while(ans == std::make_pair(-1, -1)){
+        int a = generateRandomInt(2, N-1);
+        ans = Shor(N, a);
+    }
+    return ans;
+}
+
+std::pair<int, int> Shor(int N, int a){
+    std::cout << "Running Shor's algorithm with N = " << N << " and a = " << a << std::endl;
+    // If a happens to share a factor with N, then we are done and don't need to run the quantum portion of the algorithm.
     int K = gcd(a, N);
     if(K != 1){
         std::cout << "We found an answer, but using classical methods." << std::endl;
-        return {K, N/K};
+        // return {K, N/K};
+        return {-1, -1};
     }
 
-    // Find the number of qubits for the inverse QFT
+    // Find q, the number of qubits for the first portion of the register.
     int q = 0;
     while((1 << q) < N*N){
         q++;
     }
-    int n = integerLog2(N) + 1;
 
-    return {1, N};
+    // Find n, the number of qubits for the second portion of the register.
+    int n = integerLog2(N) + 1; 
+
+    Ket output = ShorQuantumSubroutine(N, a, q, n);
+    
+    int y = output.getQubitStates();
+    int Q = 1 << q;
+    // std::cout << y << "/" << Q << ": ";
+    std::vector<int> expansion = continuedFractionExpansion(y, Q);
+    // for(int i : expansion){
+    //     std::cout << i << " ";
+    // }
+    // std::cout << "\n";
+
+    int r = -1;
+    while(!expansion.empty()){
+        std::pair<int, int> frac = fractionFromExpansion(expansion);
+        if(frac.second < N){
+            r = frac.second;
+            break;
+        }
+        expansion.pop_back();
+    }
+    assert(r != -1);
+
+    std::cout << "The quantum circuit gave us r = " << r << std::endl; 
+    
+    if(r % 2 == 1){
+        std::cout << "We got r = " << r << ", which is odd." << std::endl;
+        return {-1, -1};
+    }
+    
+    long long aExp = integerPower(a, r/2);
+    if(aExp % N == N-1){
+        std::cout << "We got r = " << r << " and a^(r/2) = " << a << "^" << r/2 << " = -1 (mod N)." << std::endl;
+        return {-1, -1};
+    }
+    
+    int factor1 = gcd(aExp + 1, N);
+    int factor2 = gcd(aExp - 1, N);
+
+    if(factor1 * factor2 != N){
+        std::cout << "Our two factors (" << factor1 << " and " << factor2 << ") don't multiply to N. The continued fractions algorithm must have given us the wrong r." << std::endl;
+        return {-1, -1};
+    }
+
+    return {factor1, factor2};
 }

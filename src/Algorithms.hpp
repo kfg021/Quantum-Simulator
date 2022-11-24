@@ -53,4 +53,6 @@ Unitary makeGroverOracle(const std::vector<bool>& f);
 
 std::pair<int, int> Shor(int N);
 
+std::pair<int, int> Shor(int N, int a);
+
 #endif

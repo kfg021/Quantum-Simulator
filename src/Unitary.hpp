@@ -46,7 +46,8 @@ class Unitary{
     static Unitary CNOT();
     static Unitary Toffoli();
 
-    // These two unitaries apply the quantum Fourier transform and the inverse quantum Fourier transform, respectivley.
+    // These two unitaries apply the quantum Fourier transform and the inverse quantum Fourier transform, respectively.
+    // TODO: Need to implement these as subroutines instead of as unitaries. They are far too slow to be used.
     static Unitary QFT(int numQubits);
     static Unitary IQFT(int numQubits);
 };
