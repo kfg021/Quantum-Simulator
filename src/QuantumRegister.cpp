@@ -109,7 +109,7 @@ void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qub
             if(u[i][j] != 0.0){
                 std::complex<double> newCoeff = coeff * u[i][j];
                 Ket appliedQubits(j, m);
-                Ket allQubits(state, this->qubits);
+                // Ket allQubits(state, this->qubits);
                 for(int k = 0; k < m; k++){
                     allQubits.setQubit(qubitsToApply[k], appliedQubits.getQubit(k));
                 }
@@ -125,17 +125,71 @@ void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qub
         std::complex<double> coeff = entry.second;
         
         // std::cout << "STATE " << state << ", COEFF " << coeff << std::endl;
-        double prob = std::norm(coeff);
-        // if(coeff != 0.0){
-        if(prob >= MIN_PROBABILITY){
+        // double prob = std::norm(coeff);
+        if(coeff != 0.0){
+        // if(prob >= MIN_PROBABILITY){
             superposition[state] = coeff;
         }
-        else{
-            std::cout << "State " << state << " is very unlikely (probability " << prob << "), so deleting." << std::endl;
-        }
+        // else{
+        //     std::cout << "State " << state << " is very unlikely (probability " << prob << "), so deleting." << std::endl;
+        // }
     }
 
     // std::cout << "THE STATE AFTER UNITARY IS " << *this << std::endl;
+}
+
+void QuantumRegister::applyBijection(const Bijection& f, const std::vector<int>& qubitsToApply){
+    for(int i : qubitsToApply){
+        assert(measuredQubits.find(i) == measuredQubits.end()); // make sure that we are not applying a unitary to a qubit we already measured.
+    }
+
+    int m = qubitsToApply.size();
+    assert((1 << m) == f.size());
+
+    std::map<int, std::complex<double>> bijectionResult;
+    for(const auto& entry : superposition){
+        int state = entry.first;
+        std::complex<double> coeff = entry.second;
+        
+        Ket allQubits(state, this->qubits);
+        Ket relevantQubits(0, m);
+        for(int i = 0; i < m; i++){
+            relevantQubits.setQubit(i, allQubits.getQubit(qubitsToApply[i]));
+        }
+
+        int x = relevantQubits.getQubitStates();
+        int fx = f.apply(x);
+        Ket appliedQubits(fx, m);
+        for(int k = 0; k < m; k++){
+            allQubits.setQubit(qubitsToApply[k], appliedQubits.getQubit(k));
+        }
+        bijectionResult[appliedQubits.getQubitStates()] = coeff;
+    }
+
+    superposition = bijectionResult;
+}
+
+void QuantumRegister::applyRotation(const Rotation& f, const std::vector<int>& qubitsToApply){
+    for(int i : qubitsToApply){
+        assert(measuredQubits.find(i) == measuredQubits.end()); // make sure that we are not applying a unitary to a qubit we already measured.
+    }
+
+    int m = qubitsToApply.size();
+    assert((1 << m) == f.size());
+
+    for(const auto& entry : superposition){
+        int state = entry.first;
+        
+        Ket allQubits(state, this->qubits);
+        Ket relevantQubits(0, m);
+        for(int i = 0; i < m; i++){
+            relevantQubits.setQubit(i, allQubits.getQubit(qubitsToApply[i]));
+        }
+
+        int x = relevantQubits.getQubitStates();
+        std::complex<double> rotation = f.getRotation(x);
+        superposition[state] *= rotation;
+    }
 }
 
 bool QuantumRegister::operator==(const QuantumRegister& qr) const {

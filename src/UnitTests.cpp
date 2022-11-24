@@ -3,6 +3,7 @@
 #include "Algorithms.hpp"
 #include "Test.hpp"
 #include "Math.hpp"
+#include "Function.hpp"
 #include <iostream>
 #include <iomanip>
 
@@ -104,77 +105,67 @@ TestObject<Unitary> ControlledUnitaryTest2(){
 
 int main(){
 
-    // RunTests<Unitary>("Unitary", {
-    //     &MultiplyTest1,
-    //     &MultiplyTest2,
-    //     &MultiplyTest3,
-    //     &TensorTest1,
-    //     &TensorTest2,
-    //     &ConjugateTest1,
-    //     &TransposeTest1,
-    //     &ConjugateTransposeTest1,
-    //     &ControlledUnitaryTest1,
-    //     &ControlledUnitaryTest2,
-    // });
+    RunTests<Unitary>("Unitary", {
+        &MultiplyTest1,
+        &MultiplyTest2,
+        &MultiplyTest3,
+        &TensorTest1,
+        &TensorTest2,
+        &ConjugateTest1,
+        &TransposeTest1,
+        &ConjugateTransposeTest1,
+        &ControlledUnitaryTest1,
+        &ControlledUnitaryTest2,
+    });
 
-    // // make bell state, transform it to another bell state, then measure.
-    // QuantumRegister bell(2, {{0b00, 1/sqrt(2)}, {0b11, 1/sqrt(2)}});
-    // std::cout << bell << std::endl;
-    // bell.applyUnitary(1i * Unitary::Y(), {0});
-    // std::cout << "BELL: " << bell << std::endl;
+    // make bell state, transform it to another bell state, then measure.
+    QuantumRegister bell(2, {{0b00, 1/sqrt(2)}, {0b11, 1/sqrt(2)}});
+    std::cout << bell << std::endl;
+    bell.applyUnitary(1i * Unitary::Y(), {0});
+    std::cout << "BELL: " << bell << std::endl;
 
-    // std::cout << "BELL STATE MEASUREMENT RESULT: " << bell.measure({0, 1}) << std::endl;
-    // std::cout << "STATE AFTER MEASUREMENT: " << bell << std::endl;
-    // std::cout << std::endl;
+    std::cout << "BELL STATE MEASUREMENT RESULT: " << bell.measure({0, 1}) << std::endl;
+    std::cout << "STATE AFTER MEASUREMENT: " << bell << std::endl;
+    std::cout << std::endl;
 
-    // // generate epr pair
-    // QuantumRegister epr(2);
-    // epr.applyUnitary(Unitary::H(), {0});
-    // epr.applyUnitary(Unitary::CNOT(), {0, 1});
-    // std::cout << epr << std::endl;
+    // generate ghz state
+    QuantumRegister ghz(3);
+    ghz.applyUnitary(Unitary::H(), {0});
+    ghz.applyUnitary(Unitary::CNOT(), {0, 1});
+    ghz.applyUnitary(Unitary::CNOT(), {1, 2});
+    std::cout << ghz << std::endl;
 
-    // std::cout << std::endl;
+    //convert ghz to bell state by measuring qubit 2 in {+, -}
+    ghz.applyUnitary(Unitary::H(), {2});
+    std::cout << ghz.measure({2}) << std::endl;
+    std::cout << ghz << std::endl;
+    std::cout << std::endl;
 
-    // // Running Deutsch-Jozsa algorithm with sample functions
-    // std::vector<bool> fConstant(8, 1);
-    // Unitary uConstant = makeDeutschJozsaOracle(fConstant);
-    // std::string outputConstant = DeutschJozsa(uConstant) ? "CONSTANT" : "BALANCED";
-    // std::cout << "The function is " + outputConstant << std::endl;
+    // Running Deutsch-Jozsa algorithm with sample 4-bit functions
+    std::vector<bool> fConstant(16, 1);
+    Bijection bConstant = makeBitOracle(fConstant);
+    std::cout << std::endl;
+    std::string outputConstant = DeutschJozsa(bConstant) == DeutschJozsaResult::BALANCED ? "BALANCED" : "CONSTANT";
+    std::cout << "The function is " + outputConstant << std::endl;
 
-    // std::vector<bool> fBalanced = {1, 0, 1, 1, 0, 0, 1, 0};
-    // Unitary uBalanced = makeDeutschJozsaOracle(fBalanced);
-    // std::string outputBalanced = DeutschJozsa(uBalanced) ? "CONSTANT" : "BALANCED";
-    // std::cout << "The function is " + outputBalanced << std::endl;
+    std::vector<bool> fBalanced = {1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1};
+    Bijection bBalanced = makeBitOracle(fBalanced);
+    std::string outputBalanced = DeutschJozsa(bBalanced) == DeutschJozsaResult::BALANCED ? "BALANCED" : "CONSTANT";
+    std::cout << "The function is " + outputBalanced << std::endl;
 
-    // std::cout << std::endl;
+    std::cout << std::endl;
 
-    // // generate ghz state
-    // QuantumRegister ghz(3);
-    // ghz.applyUnitary(Unitary::H(), {0});
-    // ghz.applyUnitary(Unitary::CNOT(), {0, 1});
-    // ghz.applyUnitary(Unitary::CNOT(), {1, 2});
-    // std::cout << ghz << std::endl;
-
-    // //convert ghz to bell state by measuring qubit 2 in {+, -}
-    // ghz.applyUnitary(Unitary::H(), {2});
-    // std::cout << ghz.measure({2}) << std::endl;
-    // std::cout << ghz << std::endl;
-
-    // std::cout << std::endl;
-
-    // // Test Grover's algorithm on a function with a 6 bit input and 1 valid answer.
-    // std::vector<bool> f(1 << 6, 0);
-    // f[45] = 1;
-    // Unitary oracle = makeGroverOracle(f);
-    // int ans = Grover(oracle, 1);
-    // std::cout << "RESULT OF GROVER'S ALGORITHM: " << ans << std::endl;
+    // Test Grover's algorithm on a function with a 8 bit input and 1 valid answer.
+    std::vector<bool> f(1 << 8, 0);
+    f[123] = 1;
+    Rotation oracle = makePhaseOracle(f);
+    int ans = Grover(oracle, 1);
+    std::cout << "RESULT OF GROVER'S ALGORITHM: " << ans << std::endl;
 
     // std::cout << std::endl;
-
     // std::cout << Unitary::IQFT(3) << std::endl;
-
-    std::pair<int, int> ans = Shor(77);
-    std::cout << ans.first << " " << ans.second << std::endl;
+    // std::pair<int, int> ans = Shor(77);
+    // std::cout << ans.first << " " << ans.second << std::endl;
     
     return 0;
 }

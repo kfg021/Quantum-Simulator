@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cassert>
 
-DeutschJozsaResult DeutschJozsa(const Unitary& oracle){
+DeutschJozsaResult DeutschJozsa(const Bijection& oracle){
     // n is the number of bits that f takes as input.
     int n = integerLog2(oracle.size()) - 1;
 
@@ -23,7 +23,8 @@ DeutschJozsaResult DeutschJozsa(const Unitary& oracle){
     for(int i = 0; i < n+1; i++){
         all.push_back(i);
     }
-    qr.applyUnitary(oracle, all);
+    // qr.applyUnitary(oracle, all);
+    qr.applyBijection(oracle, all);
 
     // Apply a Hadamard transform on the first n qubits.
     for(int i = 0; i < n; i++){
@@ -46,20 +47,20 @@ DeutschJozsaResult DeutschJozsa(const Unitary& oracle){
     }
 }
 
-Unitary makeDeutschJozsaOracle(const std::vector<bool>& f){
-    // The oracle needs to take |x>|y> to |x>|f(x) xor y>. We can do this by, for all numbers i = {x, y}, setting oracle[{x, y}][{x, y ^ f(x)}] = 1. 
+Bijection makeBitOracle(const std::vector<bool>& f){
+    // The oracle needs to take |x>|y> to |x>|f(x) xor y>. We can do this by, for all numbers i = {x, y}, setting oracle[{x, y}] = {x, y ^ f(x)}
     int N = f.size();
-    Matrix oracle(2*N, Vector(2*N, 0));
+    std::vector<int> oracle(2*N);
     for(int i = 0; i < 2*N; i++){
         int x = i >> 1;
         bool y = i & 1;
         int output = (x << 1) | (y ^ f[x]);
-        oracle[i][output] = 1;
+        oracle[i] = output;
     }
-    return Unitary(oracle);
+    return Bijection(oracle);
 }
 
-int Grover(const Unitary& oracle, int numAnswers){
+int Grover(const Rotation& oracle, int numAnswers){
     // N is the size of the domain of f. n is the number of bits that f takes as input.
     int N = oracle.size();
     int n = integerLog2(N);
@@ -77,20 +78,21 @@ int Grover(const Unitary& oracle, int numAnswers){
         all.push_back(i);
     }
 
-    Matrix m(N, Vector(N, 0));
-    m[0][0] = -1;
-    for(int i = 1; i < N; i++){
-        m[i][i] = 1;
-    }
-    Unitary groverUnitary(m);
+    /* 
+    Build the inside of the Grover diffusion operator by constructing the matrix 2|0^n><0^n| - I.
+    Since this matrix has all zeros except for on the diagonal, we can represent it as a rotation.
+    */
+    std::vector<std::complex<double>> rot(N, 1);
+    rot[0] = -1;
+    Rotation groverDiffusion(rot);
 
-    // We need to run this loop for approximatley PI/4 * sqrt(N/m) iterations, where m is the number of possible answers given by f.
+    // We need to run this loop for approximately PI/4 * sqrt(N/m) iterations, where m is the number of possible answers given by f.
     double ratio = (double)N / numAnswers;
     double iterations = (PI / 4) * sqrt(ratio);
     int roundedIterations = (int)round(iterations);
     for(int i = 0; i < roundedIterations; i++){
-        // Apply the oracle
-        qr.applyUnitary(oracle, all);
+        // Apply phase oracle
+        qr.applyRotation(oracle, all);
 
         // Apply the Grover diffusion operator in three steps:
 
@@ -100,7 +102,7 @@ int Grover(const Unitary& oracle, int numAnswers){
         }
 
         // 2) Next we apply the matrix 2|0^n><0^n| - I
-        qr.applyUnitary(groverUnitary, all);
+        qr.applyRotation(groverDiffusion, all);
 
         // 3) Lastly we apply another Hadamard transform to all qubits
         for(int i = 0; i < n; i++){
@@ -113,19 +115,16 @@ int Grover(const Unitary& oracle, int numAnswers){
     return output.getQubitStates();
 }
 
-Unitary makeGroverOracle(const std::vector<bool>& f){
-    // Build the oracle by starting with an empty matrix and setting the ith element on the diagonal to 1 if f(x) = 0 and to -1 if f(x) = 1.
+Rotation makePhaseOracle(const std::vector<bool>& f){
+    // Our oracle should be set to 1 if f(x) = 0, and -1 if f(x) = 1. 
     int N = f.size();
-    Matrix m(N, Vector(N, 0));
+    std::vector<std::complex<double>> oracle(N, 1);
     for(int i = 0; i < N; i++){
         if(f[i]){
-            m[i][i] = -1;
-        }
-        else{
-            m[i][i] = 1;
+            oracle[i] = -1;
         }
     }
-    return Unitary(m);
+    return Rotation(oracle);
 }
 
 Unitary makeShorUnitary(int a, int k, int N, int matrixSize){
@@ -136,6 +135,7 @@ Unitary makeShorUnitary(int a, int k, int N, int matrixSize){
     }
    return Unitary(m);
 }
+
 /*
 Given the values of N and a, this algorithm finds the period of the function f(x) = a^x (mod N),
 That is, the smallest r > 0 such that a^r = 1 (mod N). 
@@ -154,7 +154,7 @@ Ket ShorQuantumSubroutine(int N, int a, int q, int n){
     }
 
     for(int i = 0; i < q; i++){
-        std::cout << "APPLYING UNITARY " << i+1 << "/" << q << std::endl;
+        std::cout << "APPLYING UNITARY " << i << "/" << q << std::endl;
         // We need to apply a controlled Ua^(2^k) gate to the last n qubits. Our control qubit starts at q-1 and goes to 0 as we run through the loop.
         std::vector<int> qubitsToApply;
         qubitsToApply.push_back(q-1-i);
