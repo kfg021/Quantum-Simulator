@@ -2,7 +2,6 @@
 #include "QuantumRegister.hpp"
 #include "Math.hpp"
 #include "Random.hpp"
-#include <algorithm>
 #include <cassert>
 
 DeutschJozsaResult DeutschJozsa(const Bijection& oracle){
@@ -128,6 +127,11 @@ Rotation makePhaseOracle(const std::vector<bool>& f){
 }
 
 void QFT(QuantumRegister& qr, int start, int end){
+    /*
+    This is the quantum Fourier transform circuit. It only requires the use of one- and two-qubit gates (Hadamard, controlled rotation, swap).
+    A diagram of the cirucit can be found here:
+        https://en.wikipedia.org/wiki/Quantum_Fourier_transform#Circuit_implementation
+    */
     for(int i = start; i <= end; i++){
         qr.applyUnitary(Unitary::H(), {i});
         for(int j = i+1; j <= end; j++){
@@ -143,6 +147,10 @@ void QFT(QuantumRegister& qr, int start, int end){
 }
 
 void IQFT(QuantumRegister& qr, int start, int end){
+    /*
+    Essentially the reverse of the QFT circuit.
+    Apply all of the gates in reverse order, and reverse the directions of the phase gates.
+    */
     for(int i = start; i < end-i; i++){
         qr.applyUnitary(Unitary::Swap(), {i, end-i});
     }
@@ -167,21 +175,21 @@ Bijection makeShorUnitary(int a, int k, int N, int matrixSize){
 }
 
 /*
-Given the values of N and a, this algorithm finds the period of the function f(x) = a^x (mod N),
-That is, the smallest r > 0 such that a^r = 1 (mod N). 
+With high probability, given the values of N and a, this algorithm finds the period of the function f(x) = a^x (mod N).
+That is, the smallest r > 0 such that a^r = 1 (mod N).
 */
-Ket ShorQuantumSubroutine(int N, int a, int q, int n){
+Ket ShorQuantumSubroutine(int N, int a, int q, int n, bool log){
     // Initialize the quantum register with q+n qubits. We also need to set the last qubit to 1.
     QuantumRegister qr(q+n);
     qr.applyUnitary(Unitary::X(), {q+n-1});
 
     // Apply a Hadamard transform to the first q qubits.
-    std::cout << "APPLYING HADAMARD..." << std::endl;
+    if(log) std::cout << "Applying Hadamards..." << std::endl;
     for(int i = 0; i < q; i++){
         qr.applyUnitary(Unitary::H(), {i});
     }
 
-    std::cout << "APPLYING UNITARIES..." << std::endl;
+    if(log) std::cout << "Applying unitaries..." << std::endl;
     for(int i = 0; i < q; i++){      
         // We need to apply a controlled Ua^(2^k) gate to the last n qubits. Our control qubit starts at q-1 and goes to 0 as we run through the loop.
         std::vector<int> qubitsToApply;
@@ -203,41 +211,37 @@ Ket ShorQuantumSubroutine(int N, int a, int q, int n){
     // Measure the last n qubits to reduce the state of the quantum system before we do a QFT. The output doesn't matter.
     qr.measure(lastN);
 
-    std::cout << "APPLYING QFT..." << std::endl;
     // Now we need to apply a QFT on the first q qubits.
+    if(log) std::cout << "Applying QFT..." << std::endl;
     std::vector<int> firstQ;
     for(int i = 0; i < q; i++){
         firstQ.push_back(i);
     }
-    // qr.applyUnitary(Unitary::QFT(q), firstQ);
     QFT(qr, 0, q-1);
-
-    // std::cout << qr << std::endl;
 
     // Now we measure the first q qubits.
     Ket output = qr.measure(firstQ);
-
-    // std::cout << (double)output.getQubitStates() / (1 << q) << " should be close to c / r\n";
     return output;
 }
 
-std::pair<int, int> Shor(int N){
-    std::pair<int, int> ans = {-1, -1};
-    while(ans == std::make_pair(-1, -1)){
+ShorResult Shor(int N, bool log){
+    // Keep trying random values of a until we find the factors.
+    ShorResult ans = SHOR_INVALID;
+    while(ans == SHOR_INVALID){
         int a = generateRandomInt(2, N-1);
-        ans = Shor(N, a);
+        ans = Shor(N, a, log);
     }
     return ans;
 }
 
-std::pair<int, int> Shor(int N, int a){
-    std::cout << "Running Shor's algorithm with N = " << N << " and a = " << a << std::endl;
+ShorResult Shor(int N, int a, bool log){
+    if(log) std::cout << "Running Shor's algorithm with N = " << N << " and a = " << a << std::endl;
     // If a happens to share a factor with N, then we are done and don't need to run the quantum portion of the algorithm.
     int K = gcd(a, N);
     if(K != 1){
-        std::cout << "We found an answer, but using classical methods." << std::endl;
-        // return {K, N/K};
-        return {-1, -1};
+        // The factors of N are K and N/K. But the goal of this project is to test the quantum portion, so we ignore the result.
+        if(log) std::cout << "We found an answer, but using classical methods." << std::endl;
+        return SHOR_INVALID;
     }
 
     // Find q, the number of qubits for the first portion of the register.
@@ -249,16 +253,11 @@ std::pair<int, int> Shor(int N, int a){
     // Find n, the number of qubits for the second portion of the register.
     int n = integerLog2(N) + 1; 
 
-    Ket output = ShorQuantumSubroutine(N, a, q, n);
+    Ket output = ShorQuantumSubroutine(N, a, q, n, log);
     
     int y = output.getQubitStates();
     int Q = 1 << q;
-    // std::cout << y << "/" << Q << ": ";
     std::vector<int> expansion = continuedFractionExpansion(y, Q);
-    // for(int i : expansion){
-    //     std::cout << i << " ";
-    // }
-    // std::cout << "\n";
 
     int r = -1;
     while(!expansion.empty()){
@@ -271,27 +270,36 @@ std::pair<int, int> Shor(int N, int a){
     }
     assert(r != -1);
 
-    std::cout << "The quantum circuit gave us r = " << r << std::endl; 
+    if(log) std::cout << "The quantum circuit gave us r = " << r << std::endl; 
     
-    // TODO: check even multiples of r
-    if(r % 2 == 1){
-        std::cout << "We got r = " << r << ", which is odd." << std::endl;
-        return {-1, -1};
-    }
-    
-    int aExp = integerPowerMod(a, r/2, N);
-    if(aExp % N == N-1){
-        std::cout << "We got r = " << r << " and a^(r/2) = " << a << "^" << r/2 << " = -1 (mod N)." << std::endl;
-        return {-1, -1};
-    }
-    
-    int factor1 = gcd(aExp + 1, N);
-    int factor2 = gcd(aExp - 1, N);
+    /*
+    The r we got may not be correct. There is a chance that the continued fraction algorithm instead gave us a factor of the real r.
+    Thus, we should try some even multiples of r to see if they work. Here, we try 5.
+    */
+    if(log) std::cout << "Testing r and some of its even multiples..." << std::endl;
+    for(int i = 1; i <= 5; i++){
+        int r_test = r % 2 == 0 ? i * r : 2 * i * r;
+        int aExp = integerPowerMod(a, r_test/2, N);
+        if(aExp % N == N-1){
+            // If a^(r/2) = -1 (mod N), then it will not help us find the factors.
+            continue;
+        }
+        
+        int factor1 = gcd(aExp + 1, N);
+        int factor2 = gcd(aExp - 1, N);
+        if(factor1 * factor2 != N){
+            /* Our factors didn't end up multiplying to N. This could mean a couple of things:
+                * We choose a bad value for a, which gave us an odd r.
+                * We choose a good value for a, but the continued fractions algorithm gave us the wrong r.
+            */
+            continue;
+        }
 
-    if(factor1 * factor2 != N){
-        std::cout << "Our two factors (" << factor1 << " and " << factor2 << ") don't multiply to N. The continued fractions algorithm must have given us the wrong r." << std::endl;
-        return {-1, -1};
+        if(log) std::cout << "r = " << r_test << " gave us the correct factors." << std::endl;
+        return {factor1, factor2};
     }
-
-    return {factor1, factor2};
+    
+    // If none of those r values worked, return SHOR_INVALID as we couldn't find an answer.
+    if(log) std::cout << "Didn't find an answer." << std::endl;
+    return SHOR_INVALID;
 }

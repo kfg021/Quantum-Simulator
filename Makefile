@@ -5,13 +5,13 @@ SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 # LDFLAGS := ...
 # CPPFLAGS := ...
-CXXFLAGS := -O3 -std=c++17
+CXXFLAGS := -std=c++17
 
 test: $(OBJ_FILES)
-	g++-12 $(LDFLAGS) -o $@ $^
+	g++ $(LDFLAGS) -o $@ $^
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	g++-12 $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+	g++ $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 CXXFLAGS += -MMD
 -include $(OBJ_FILES:.o=.d)

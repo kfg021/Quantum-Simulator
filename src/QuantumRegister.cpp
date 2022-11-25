@@ -4,6 +4,10 @@
 #include <unordered_set>
 #include <map>
 
+/*
+The minimum probability we consider. 
+If some state has a probability of occuring less than this, then we set it to 0 for performance purposes.
+*/
 const double MIN_PROBABILITY = 1e-20;
 
 QuantumRegister::QuantumRegister(int _qubits): qubits(_qubits) {
@@ -32,7 +36,9 @@ double QuantumRegister::probability(int state) const {
 
 Ket QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
     for(int i : qubitsToMeasure){
-        assert(measuredQubits.find(i) == measuredQubits.end()); // make sure that we are not re-measuring a qubit.
+        // Make sure that we are not re-measuring a qubit.
+        assert(measuredQubits.find(i) == measuredQubits.end());
+        
         measuredQubits.insert(i);
     }
 
@@ -60,7 +66,6 @@ Ket QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
     int remainingSize = this->qubits - measureSize;
 
     double rand = generateRandomDouble();
-    // std::cout << "OUR RANDOM NUMBER IS " << rand << std::endl;
     double sum = 0;
     for(auto& entry : possibleOutcomes){
         int state = entry.first;
@@ -73,7 +78,6 @@ Ket QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
                 coeff *= 1/sqrt(mo.probability);
             }
             this->superposition = mo.superposition;
-            // this->qubits = remainingSize;
             return Ket(state, measureSize);
         }
     }
@@ -91,7 +95,8 @@ Ket QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
 
 void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qubitsToApply){
     for(int i : qubitsToApply){
-        assert(measuredQubits.find(i) == measuredQubits.end()); // make sure that we are not applying a unitary to a qubit we already measured.
+        // Make sure that we are not applying a unitary to a qubit we already measured.
+        assert(measuredQubits.find(i) == measuredQubits.end());
     }
 
     int m = qubitsToApply.size();
@@ -113,7 +118,6 @@ void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qub
             if(u[i][j] != 0.0){
                 std::complex<double> newCoeff = coeff * u[i][j];
                 Ket appliedQubits(j, m);
-                // Ket allQubits(state, this->qubits);
                 for(int k = 0; k < m; k++){
                     allQubits.setQubit(qubitsToApply[k], appliedQubits.getQubit(k));
                 }
@@ -122,29 +126,24 @@ void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qub
         }
     }
 
-    // add all non-zero entries to superposition
+    // Add all non-zero entries to superposition
     superposition.clear();
     for(const auto& entry : unitaryResult){
         int state = entry.first;
         std::complex<double> coeff = entry.second;
         
-        // std::cout << "STATE " << state << ", COEFF " << coeff << std::endl;
+        // If a state's probability of occuring is sufficiently small, it's safe to ignore it.
         double prob = std::norm(coeff);
-        // if(coeff != 0.0){
         if(prob >= MIN_PROBABILITY){
             superposition[state] = coeff;
         }
-        // else{
-        //     std::cout << "State " << state << " is very unlikely (probability " << prob << "), so deleting." << std::endl;
-        // }
     }
-
-    // std::cout << "THE STATE AFTER UNITARY IS " << *this << std::endl;
 }
 
 void QuantumRegister::applyBijection(const Bijection& f, const std::vector<int>& qubitsToApply){
     for(int i : qubitsToApply){
-        assert(measuredQubits.find(i) == measuredQubits.end()); // make sure that we are not applying a unitary to a qubit we already measured.
+        // Make sure that we are not applying a function to a qubit we already measured.
+        assert(measuredQubits.find(i) == measuredQubits.end());
     }
 
     int m = qubitsToApply.size();
@@ -175,7 +174,8 @@ void QuantumRegister::applyBijection(const Bijection& f, const std::vector<int>&
 
 void QuantumRegister::applyRotation(const Rotation& f, const std::vector<int>& qubitsToApply){
     for(int i : qubitsToApply){
-        assert(measuredQubits.find(i) == measuredQubits.end()); // make sure that we are not applying a unitary to a qubit we already measured.
+        // Make sure that we are not applying a function to a qubit we already measured.
+        assert(measuredQubits.find(i) == measuredQubits.end());
     }
 
     int m = qubitsToApply.size();
@@ -207,7 +207,7 @@ std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr){
         return os;
     }
 
-    // const std::unordered_map<int, std::complex<double>>& values = qr.superposition;
+    // We copy the states into a map so that we can print them in order.
     std::map<int, std::complex<double>> values;
     for(const auto& entry : qr.superposition){
         int state = entry.first;
@@ -224,7 +224,7 @@ std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr){
         Ket allQubits(state, qr.qubits);
         Ket unmeasuredQubits(0, 0);
         for(int i = 0; i < qr.qubits; i++){
-            // only print out the qubit if it has not already been measured.
+            // Only print out the qubit if it has not already been measured.
             if(qr.measuredQubits.find(i) == qr.measuredQubits.end()){
                 unmeasuredQubits.addQubit(allQubits.getQubit(i));
             }

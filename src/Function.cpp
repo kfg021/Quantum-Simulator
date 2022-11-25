@@ -1,7 +1,7 @@
 #include "Function.hpp"
 #include <cassert>
 
-// TODO: probably also check if it's actually a Bijection
+// TODO: probably also check if it's actually a Bijection. (And maybe only do this check on a "debug" mode)
 Bijection::Bijection(const std::vector<int>& _f): f(_f) {}
 
 int Bijection::size() const {
@@ -25,7 +25,7 @@ Bijection Bijection::controlled() const {
     return Bijection(g);
 }
 
-// TODO: probably also check if it's actually a Rotation
+// TODO: probably also check if it's actually a Rotation. (And maybe only do this check on a "debug" mode)
 Rotation::Rotation(const std::vector<std::complex<double>>& _f): f(_f) {}
 
 int Rotation::size() const {

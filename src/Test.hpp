@@ -5,6 +5,7 @@
 #include <cassert>
 #include <functional>
 
+// TODO: delete this file
 template<typename T>
 struct TestObject{
     std::string name;

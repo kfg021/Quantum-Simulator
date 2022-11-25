@@ -4,8 +4,10 @@
 #include "Unitary.hpp"
 #include "Function.hpp"
 #include "QuantumRegister.hpp"
-#include <string>
 
+/*
+Return type for the Deutsch-Jozsa algorithm (defined below)
+*/
 enum DeutschJozsaResult { 
     CONSTANT, BALANCED 
 };
@@ -54,12 +56,47 @@ This function assumes that f is given as a boolean vector of size 2^n for some p
 */
 Rotation makePhaseOracle(const std::vector<bool>& f);
 
+/*
+Computes the quantum Fourier transform (QFT) of a section of a quantum register.
+The QFT takes the quantum state |j> to the state 1/sqrt(N) sum(k=0 to N-1) exp(2 pi i j k / N).
+This implementation constructs the QFT using only one- and two-qubit gates.
+*/
 void QFT(QuantumRegister& qr, int start, int end);
 
+/*
+Computes the inverse quantum Fourier transform (IQFT) of a section of a quantum register.
+The IQFT takes the quantum state |j> to the state 1/sqrt(N) sum(k=0 to N-1) exp(-2 pi i j k / N).
+This implementation constructs the QFT using only one- and two-qubit gates.
+*/
 void IQFT(QuantumRegister& qr, int start, int end);
 
-std::pair<int, int> Shor(int N);
+/*
+Return type for Shor's algorithm (defined below)
+*/
+struct ShorResult {
+    int factor1;
+    int factor2;
+    bool operator==(const ShorResult& sr){
+        return factor1 == sr.factor1 && factor2 == sr.factor2;
+    }
+};
+const ShorResult SHOR_INVALID = {-1, -1};
 
-std::pair<int, int> Shor(int N, int a);
+/*
+Given an integer N that is the product of two primes, calculate its factors.
+Shor's algorithm works by picking a random number a less than N, finding the period of the function f(x) = a^x mod N,
+and using this period to construct much better guesses for the factors of N.
+On real quantum hardware, Shor's algorithm runs in polynomial time.
+
+Since this function can take a while (we may need to run the quantum subroutine multiple times and quantum simulation takes exponential time on classical hardware),
+there is also an option to log progress updates.
+*/
+ShorResult Shor(int N, bool log = false);
+
+/*
+This is verion of Shor's algorithm where the guess a is given. This function runs the quantum subroutine once, returns the factors of N if it finds them,
+and otherwise returns SHOR_INVALID.
+*/
+ShorResult Shor(int N, int a, bool log = false);
 
 #endif

@@ -13,7 +13,6 @@ int integerPowerMod(int a, long long b, int n){
     if(b == 0){
         return 1;
     }
-
     int c = integerPowerMod(a, b/2, n);
     int d = ((long long)c * c) % n;
     if(b%2 == 0){
@@ -28,11 +27,14 @@ long long gcd(long long a, long long b){
     if(b == 0){
         return a;
     }
-    else{
-        return gcd(b, a % b);
-    }
+    return gcd(b, a % b);
 }
 
+
+/*
+Recursive helper for continued fraction expansion. We essentially apply the Euclidean algorithm,
+but save the values of a/b into a vector.
+*/
 void continuedFractionHelper(int a, int b, std::vector<int>& expansion){
     if(b != 0) {
         expansion.push_back(a / b);
@@ -46,7 +48,13 @@ std::vector<int> continuedFractionExpansion(int a, int b){
     return expansion;
 }
 
+/*
+These are recursive helper functions for continued fraction calculation.
+I essentially implemented the formulas from here:
+    https://en.wikipedia.org/wiki/Continued_fraction#Some_useful_theorems
 
+Using memoization to avoid exponential complexity.
+*/
 int h(int x, const std::vector<int>& expansion, std::vector<int>& hValues){
     if(x == -1){
         return 1;
@@ -63,6 +71,7 @@ int h(int x, const std::vector<int>& expansion, std::vector<int>& hValues){
         return ans;
     }
 }
+
 int k(int x, const std::vector<int>& expansion, std::vector<int>& kValues){
     if(x == -1){
         return 0;

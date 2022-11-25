@@ -1,12 +1,8 @@
-#include "Unitary.hpp"
-#include "QuantumRegister.hpp"
-#include "Algorithms.hpp"
+#include "QuantumSimulator.hpp"
 #include "Test.hpp"
-#include "Math.hpp"
-#include "Function.hpp"
 #include <iostream>
-#include <iomanip>
 
+// TODO: Clean this up and probably rename to main. Also add a main header
 // Most of these tests are not actually unitary. But it's just easier to write tests for whole numbers.
 TestObject<Unitary> MultiplyTest1(){
     Unitary u({
@@ -162,8 +158,9 @@ int main(){
     std::cout << "RESULT OF GROVER'S ALGORITHM: " << ans << std::endl;
 
     std::cout << std::endl;
-    std::pair<int, int> factors = Shor(391, 72);
-    std::cout << factors.first << " " << factors.second << std::endl;
+    ShorResult factors = Shor(391, true);
+
+    std::cout << "The factors are " << factors.factor1 << " and " << factors.factor2 << std::endl;
     
     return 0;
 }

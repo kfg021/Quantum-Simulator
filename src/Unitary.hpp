@@ -21,7 +21,6 @@ class Unitary{
 
     Unitary operator*(const Unitary& u) const;
     Unitary operator*(const std::complex<double>& z) const;
-    // Vector operator*(const Vector& v) const;
     friend Unitary operator*(const std::complex<double>& z, const Unitary& u);
     Unitary operator-() const;
     
@@ -30,11 +29,12 @@ class Unitary{
     Unitary transpose() const;
     Unitary controlled() const;
 
+    // TODO: delete
     bool operator==(const Unitary& u) const;
 
     friend std::ostream& operator<<(std::ostream& os, const Unitary& u);
 
-    static Unitary zero(int size); // not actually a unitary matrix, but helpful
+    static Unitary zero(int size); // Not actually a unitary matrix, but helpful
 
     // Helpful unitary matrices
     static Unitary identity(int size);

@@ -27,19 +27,6 @@ Unitary Unitary::operator*(const Unitary& u) const {
     return v;
 }
 
-// Vector Unitary::operator*(const Vector& v) const {
-//     assert(this->size() == v.size());
-
-//     int n = this->size();
-//     Vector u(n, 0);
-//     for(int i = 0; i < n; i++){
-//         for(int j = 0; j < n; j++){
-//             u[i] += this->matrix[i][j] * v[j];
-//         }
-//     }
-//     return u;
-// }
-
 Unitary Unitary::operator*(const std::complex<double>& z) const {
     int n = size();
     Unitary v = zero(n);
@@ -111,6 +98,7 @@ Unitary Unitary::controlled() const {
     return u;
 }
 
+// TODO: delete
 bool Unitary::operator==(const Unitary& u) const {
     // TODO: add epsilon checking
     return this->matrix == u.matrix;

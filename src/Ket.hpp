@@ -3,7 +3,6 @@
 
 #include <string>
 #include <ostream>
-#include <vector>
 
 class Ket{
     private:
