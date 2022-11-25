@@ -9,20 +9,6 @@ int integerLog2(int a){
     return log;
 }
 
-long long integerPower(int a, int b){
-    if(b == 0){
-        return 1;
-    }
-
-    long long c = integerPower(a, b/2);
-    if(b%2 == 0){
-        return c * c;
-    }
-    else{
-        return c * c * a;
-    }
-}
-
 int integerPowerMod(int a, long long b, int n){
     if(b == 0){
         return 1;

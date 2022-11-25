@@ -171,7 +171,7 @@ Unitary Unitary::H(){
 Unitary Unitary::phase(double theta){
     return Unitary({
         {1, 0},
-        {0, std::exp(std::complex<double>(0, theta))},
+        {0, std::exp(1i * theta)},
     });
 }
 
@@ -197,29 +197,11 @@ Unitary Unitary::Toffoli(){
     });
 }
 
-Unitary Unitary::QFT(int numQubits){
-    /*
-    On a real quantum computer, the QFT would almost certianly not be implemented as one large unitary, and would instead be implemented as
-    a combination of one and two-qubit gates. However, for simplicity, we implemement it here as an NxN matrix, where N = 2^numQubits.
-    */
-    int N = 1 << numQubits;
-    Matrix m(N, Vector(N, 0));
-    // std::complex<double> omega = std::exp((-2.0 * PI * 1i) / std::complex<double>(N, 0));
-    for(int i = 0; i < N; i++){
-        for(int j = 0; j < N; j++){
-            std::complex<double> omegaij = std::exp((-2 * i * j * PI * 1i) / std::complex<double>(N, 0));
-            m[i][j] = omegaij;
-            // m[i][j] = pow(omega, i*j);
-        }
-    }
-
-    return (1.0/sqrt(N)) * Unitary(m);
-}
-
-Unitary Unitary::IQFT(int numQubits){
-    /*
-    On a real quantum computer, the IQFT would almost certianly not be implemented as one large unitary, and would instead be implemented as
-    a combination of one and two-qubit gates. However, for simplicity, we implemement it here as an NxN matrix, where N = 2^numQubits.
-    */
-    return QFT(numQubits).conjugate().transpose();
+Unitary Unitary::Swap(){
+    return Unitary({
+        {1, 0, 0, 0},
+        {0, 0, 1, 0},
+        {0, 1, 0, 0},
+        {0, 0, 0, 1}
+    });
 }

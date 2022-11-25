@@ -3,6 +3,7 @@
 
 #include "Unitary.hpp"
 #include "Function.hpp"
+#include "QuantumRegister.hpp"
 #include <string>
 
 enum DeutschJozsaResult { 

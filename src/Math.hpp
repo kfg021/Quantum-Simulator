@@ -14,9 +14,6 @@ const double PI = 4.0 * atan(1);
 // Calculates floor(log2(a))
 int integerLog2(int a);
 
-// Calculates a^b using repeated squaring
-long long integerPower(int a, int b);
-
 // Calculates a^b mod n using repeated squaring
 int integerPowerMod(int a, long long b, int n);
 

@@ -2,7 +2,7 @@
 #include "Random.hpp"
 #include <cassert>
 #include <unordered_set>
-// #include <map>
+#include <map>
 
 const double MIN_PROBABILITY = 1e-20;
 
@@ -10,7 +10,11 @@ QuantumRegister::QuantumRegister(int _qubits): qubits(_qubits) {
     superposition[0] = 1;
 }
 
-QuantumRegister::QuantumRegister(int _qubits, std::map<int, std::complex<double>> _superposition): qubits(_qubits), superposition(_superposition){}
+QuantumRegister::QuantumRegister(int _qubits, std::unordered_map<int, std::complex<double>> _superposition): qubits(_qubits), superposition(_superposition){}
+
+int QuantumRegister::numStates(){
+    return superposition.size();
+}
 
 std::complex<double> QuantumRegister::getCoefficient(int state) const {
     auto iterator = superposition.find(state);
@@ -34,9 +38,9 @@ Ket QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
 
     struct MeasurementOutcome{
         double probability = 0;
-        std::map<int, std::complex<double>> superposition;
+        std::unordered_map<int, std::complex<double>> superposition;
     };
-    std::map<int, MeasurementOutcome> possibleOutcomes;
+    std::unordered_map<int, MeasurementOutcome> possibleOutcomes;
 
     for(const auto& entry : superposition){
         int state = entry.first;
@@ -93,7 +97,7 @@ void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qub
     int m = qubitsToApply.size();
     assert((1 << m) == u.size());
 
-    std::map<int, std::complex<double>> unitaryResult;
+    std::unordered_map<int, std::complex<double>> unitaryResult;
     for(const auto& entry : superposition){
         int state = entry.first;
         std::complex<double> coeff = entry.second;
@@ -125,9 +129,9 @@ void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qub
         std::complex<double> coeff = entry.second;
         
         // std::cout << "STATE " << state << ", COEFF " << coeff << std::endl;
-        // double prob = std::norm(coeff);
-        if(coeff != 0.0){
-        // if(prob >= MIN_PROBABILITY){
+        double prob = std::norm(coeff);
+        // if(coeff != 0.0){
+        if(prob >= MIN_PROBABILITY){
             superposition[state] = coeff;
         }
         // else{
@@ -146,7 +150,7 @@ void QuantumRegister::applyBijection(const Bijection& f, const std::vector<int>&
     int m = qubitsToApply.size();
     assert((1 << m) == f.size());
 
-    std::map<int, std::complex<double>> bijectionResult;
+    std::unordered_map<int, std::complex<double>> bijectionResult;
     for(const auto& entry : superposition){
         int state = entry.first;
         std::complex<double> coeff = entry.second;
@@ -203,13 +207,13 @@ std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr){
         return os;
     }
 
-    const std::map<int, std::complex<double>>& values = qr.superposition;
-    // std::map<int, std::complex<double>> values;
-    // for(const auto& entry : qs.superposition){
-    //     int state = entry.first;
-    //     std::complex<double> coeff = entry.second;
-    //     values[state] = coeff;
-    // }
+    // const std::unordered_map<int, std::complex<double>>& values = qr.superposition;
+    std::map<int, std::complex<double>> values;
+    for(const auto& entry : qr.superposition){
+        int state = entry.first;
+        std::complex<double> coeff = entry.second;
+        values[state] = coeff;
+    }
     for(auto iterator = values.begin(); iterator != values.end(); iterator++){
         if(iterator != values.begin()){
             os << " + ";

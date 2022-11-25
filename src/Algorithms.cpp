@@ -127,6 +127,36 @@ Rotation makePhaseOracle(const std::vector<bool>& f){
     return Rotation(oracle);
 }
 
+void QFT(QuantumRegister& qr, int start, int end){
+    for(int i = start; i <= end; i++){
+        qr.applyUnitary(Unitary::H(), {i});
+        for(int j = i+1; j <= end; j++){
+            int k = j - i + 1;
+            Unitary rk = Unitary::phase((2 * PI) / (1 << k));
+            qr.applyUnitary(rk.controlled(), {j, i});
+        }
+    }
+
+    for(int i = start; i < end-i; i++){
+        qr.applyUnitary(Unitary::Swap(), {i, end-i});
+    }
+}
+
+void IQFT(QuantumRegister& qr, int start, int end){
+    for(int i = start; i < end-i; i++){
+        qr.applyUnitary(Unitary::Swap(), {i, end-i});
+    }
+
+    for(int i = end; i >= start; i--){
+        for(int j = end; j < i; j--){
+            int k = j - i + 1;
+            Unitary rk = Unitary::phase((-2 * PI) / (1 << k));
+            qr.applyUnitary(rk.controlled(), {j, i});
+        }
+        qr.applyUnitary(Unitary::H(), {i});
+    }
+}
+
 Bijection makeShorUnitary(int a, int k, int N, int matrixSize){
     // Build the unitary Ua^(2^k), which takes the state |x> to the state |a^(2^k) x (mod N)>, represented as a bijection.
     std::vector<int> func(matrixSize);
@@ -146,12 +176,13 @@ Ket ShorQuantumSubroutine(int N, int a, int q, int n){
     qr.applyUnitary(Unitary::X(), {q+n-1});
 
     // Apply a Hadamard transform to the first q qubits.
+    std::cout << "APPLYING HADAMARD..." << std::endl;
     for(int i = 0; i < q; i++){
         qr.applyUnitary(Unitary::H(), {i});
     }
 
-    for(int i = 0; i < q; i++){
-        std::cout << "APPLYING UNITARY 2^" << i << std::endl;
+    std::cout << "APPLYING UNITARIES..." << std::endl;
+    for(int i = 0; i < q; i++){      
         // We need to apply a controlled Ua^(2^k) gate to the last n qubits. Our control qubit starts at q-1 and goes to 0 as we run through the loop.
         std::vector<int> qubitsToApply;
         qubitsToApply.push_back(q-1-i);
@@ -164,13 +195,22 @@ Ket ShorQuantumSubroutine(int N, int a, int q, int n){
         qr.applyBijection(ua2k.controlled(), qubitsToApply);
     }
 
-    std::cout << "STARTING QFT..." << std::endl;
-    // Now we need to apply an inverse QFT on the first q qubits.
+    std::vector<int> lastN;
+    for(int i = q; i < q+n; i++){
+        lastN.push_back(i);
+    }
+
+    // Measure the last n qubits to reduce the state of the quantum system before we do a QFT. The output doesn't matter.
+    qr.measure(lastN);
+
+    std::cout << "APPLYING QFT..." << std::endl;
+    // Now we need to apply a QFT on the first q qubits.
     std::vector<int> firstQ;
     for(int i = 0; i < q; i++){
         firstQ.push_back(i);
     }
-    qr.applyUnitary(Unitary::IQFT(q), firstQ);
+    // qr.applyUnitary(Unitary::QFT(q), firstQ);
+    QFT(qr, 0, q-1);
 
     // std::cout << qr << std::endl;
 
@@ -233,12 +273,13 @@ std::pair<int, int> Shor(int N, int a){
 
     std::cout << "The quantum circuit gave us r = " << r << std::endl; 
     
+    // TODO: check even multiples of r
     if(r % 2 == 1){
         std::cout << "We got r = " << r << ", which is odd." << std::endl;
         return {-1, -1};
     }
     
-    long long aExp = integerPower(a, r/2);
+    int aExp = integerPowerMod(a, r/2, N);
     if(aExp % N == N-1){
         std::cout << "We got r = " << r << " and a^(r/2) = " << a << "^" << r/2 << " = -1 (mod N)." << std::endl;
         return {-1, -1};
