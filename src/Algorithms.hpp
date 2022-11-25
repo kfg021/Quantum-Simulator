@@ -53,6 +53,10 @@ This function assumes that f is given as a boolean vector of size 2^n for some p
 */
 Rotation makePhaseOracle(const std::vector<bool>& f);
 
+void QFT(QuantumRegister& qr, int start, int end);
+
+void IQFT(QuantumRegister& qr, int start, int end);
+
 std::pair<int, int> Shor(int N);
 
 std::pair<int, int> Shor(int N, int a);

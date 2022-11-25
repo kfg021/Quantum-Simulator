@@ -12,6 +12,7 @@ class Bijection{
     Bijection(const std::vector<int>& f);
     int size() const;
     int apply(int x) const;
+    Bijection controlled() const;
 };
 
 class Rotation{
@@ -22,6 +23,7 @@ class Rotation{
     Rotation(const std::vector<std::complex<double>>& f);
     int size() const;
     std::complex<double> getRotation(int x) const;
+    Rotation controlled() const;
 };
 
 #endif

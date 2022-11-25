@@ -163,7 +163,7 @@ void QuantumRegister::applyBijection(const Bijection& f, const std::vector<int>&
         for(int k = 0; k < m; k++){
             allQubits.setQubit(qubitsToApply[k], appliedQubits.getQubit(k));
         }
-        bijectionResult[appliedQubits.getQubitStates()] = coeff;
+        bijectionResult[allQubits.getQubitStates()] = coeff;
     }
 
     superposition = bijectionResult;

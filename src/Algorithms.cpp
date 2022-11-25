@@ -127,13 +127,13 @@ Rotation makePhaseOracle(const std::vector<bool>& f){
     return Rotation(oracle);
 }
 
-Unitary makeShorUnitary(int a, int k, int N, int matrixSize){
-    // Build the unitary Ua^(2^k), which takes the state |x> to the state |a^(2^k) x (mod N)>.
-    Matrix m(matrixSize, Vector(matrixSize, 0));
+Bijection makeShorUnitary(int a, int k, int N, int matrixSize){
+    // Build the unitary Ua^(2^k), which takes the state |x> to the state |a^(2^k) x (mod N)>, represented as a bijection.
+    std::vector<int> func(matrixSize);
     for(int x = 0; x < matrixSize; x++){
-        m[x][(integerPowerMod(a, 1LL << k, N) * x) % N] = 1;
+        func[x] = (integerPowerMod(a, 1LL << k, N) * x) % N;
     }
-   return Unitary(m);
+    return Bijection(func);
 }
 
 /*
@@ -141,9 +141,6 @@ Given the values of N and a, this algorithm finds the period of the function f(x
 That is, the smallest r > 0 such that a^r = 1 (mod N). 
 */
 Ket ShorQuantumSubroutine(int N, int a, int q, int n){
-
-    // std::cout << q << " " << n << "\n";
-
     // Initialize the quantum register with q+n qubits. We also need to set the last qubit to 1.
     QuantumRegister qr(q+n);
     qr.applyUnitary(Unitary::X(), {q+n-1});
@@ -154,7 +151,7 @@ Ket ShorQuantumSubroutine(int N, int a, int q, int n){
     }
 
     for(int i = 0; i < q; i++){
-        std::cout << "APPLYING UNITARY " << i << "/" << q << std::endl;
+        std::cout << "APPLYING UNITARY 2^" << i << std::endl;
         // We need to apply a controlled Ua^(2^k) gate to the last n qubits. Our control qubit starts at q-1 and goes to 0 as we run through the loop.
         std::vector<int> qubitsToApply;
         qubitsToApply.push_back(q-1-i);
@@ -163,9 +160,8 @@ Ket ShorQuantumSubroutine(int N, int a, int q, int n){
         }
 
         // Apply the unitary Ua^(2^k) which takes |x> to |a^(2^k) x (mod N)> .
-        int matrixSize = 1 << n;
-        Unitary ua2k = makeShorUnitary(a, i, N, matrixSize);
-        qr.applyUnitary(ua2k.controlled(), qubitsToApply);
+        Bijection ua2k = makeShorUnitary(a, i, N, 1 << n);
+        qr.applyBijection(ua2k.controlled(), qubitsToApply);
     }
 
     std::cout << "STARTING QFT..." << std::endl;
