@@ -158,6 +158,33 @@ int main(){
     std::cout << "RESULT OF GROVER'S ALGORITHM: " << ans << std::endl;
 
     std::cout << std::endl;
+
+    // teleportation test
+    QuantumRegister teleport(3);
+    // Apply x, then apply random rotation to first qubit
+    teleport.applyUnitary(Unitary::X(), {0});
+    double rand = generateRandomDouble();
+    teleport.applyUnitary(Unitary::phase(2 * PI * rand), {0});
+    std::cout << "Original qubit: " << teleport << std::endl;
+    //make bell state
+    teleport.applyUnitary(Unitary::H(), {1});
+    teleport.applyUnitary(Unitary::CNOT(), {1, 2});
+    // in theory now Alice would send the second part of the bell state to Bob
+    teleport.applyUnitary(Unitary::CNOT(), {0, 1});
+    teleport.applyUnitary(Unitary::H(), {0});
+    Ket info = teleport.measure({0, 1});
+    // Now alice would send this info to Bob so he can recover her qubit.
+    if(info.getQubit(1)){
+        teleport.applyUnitary(Unitary::X(), {2});
+    }
+    if(info.getQubit(0)){
+        teleport.applyUnitary(Unitary::Z(), {2});
+    }
+    // now bob should have alice's qubit
+    std::cout << "Teleported qubit: " << teleport << std::endl;
+    std::cout << std::endl;
+
+    // shor test
     ShorResult factors = Shor(391, true);
 
     std::cout << "The factors are " << factors.factor1 << " and " << factors.factor2 << std::endl;
