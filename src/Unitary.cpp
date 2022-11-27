@@ -98,12 +98,6 @@ Unitary Unitary::controlled() const {
     return u;
 }
 
-// TODO: delete
-bool Unitary::operator==(const Unitary& u) const {
-    // TODO: add epsilon checking
-    return this->matrix == u.matrix;
-}
-
 std::ostream& operator<<(std::ostream& os, const Unitary& u){
     int n = u.size();
     for(int i = 0; i < n; i++){

@@ -200,7 +200,7 @@ bool QuantumRegister::operator==(const QuantumRegister& qr) const {
     return superposition == qr.superposition;
 }
 
-
+// TODO: maybe add an option to print a subset of qubits
 std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr){
     if((int)qr.measuredQubits.size() == qr.qubits){
         os << "EMPTY";

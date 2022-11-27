@@ -239,7 +239,7 @@ ShorResult Shor(int N, int a, bool log){
     // If a happens to share a factor with N, then we are done and don't need to run the quantum portion of the algorithm.
     int K = gcd(a, N);
     if(K != 1){
-        // The factors of N are K and N/K. But the goal of this project is to test the quantum portion, so we ignore the result.
+        // The factors of N are K and N/K. However, since we want to test the quantum portion, we ignore the result.
         if(log) std::cout << "We found an answer, but using classical methods." << std::endl;
         return SHOR_INVALID;
     }

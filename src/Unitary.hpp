@@ -29,9 +29,6 @@ class Unitary{
     Unitary transpose() const;
     Unitary controlled() const;
 
-    // TODO: delete
-    bool operator==(const Unitary& u) const;
-
     friend std::ostream& operator<<(std::ostream& os, const Unitary& u);
 
     static Unitary zero(int size); // Not actually a unitary matrix, but helpful

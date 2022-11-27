@@ -4,6 +4,8 @@
 #include <string>
 #include <ostream>
 
+
+// TODO: rename to something (basis state)?
 class Ket{
     private:
     int qubitStates;

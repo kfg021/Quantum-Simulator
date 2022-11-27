@@ -11,6 +11,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
+// TODO: superposition should probably be abstracted into a class called quantumState. Then we can change the constructor; change the apply functions to work on quantumstates.
+// also we can let a qubit be a 1-bit quantum state. maybe also add append functionality to quantum states/registers??
+
+// TODO: helper function to create a vector of a certian range.
 class QuantumRegister{
     private:
     const int qubits;
