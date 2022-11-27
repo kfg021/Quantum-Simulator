@@ -4,6 +4,7 @@
 // TODO: add more tests
 void testTeleportation();
 void testDeutschJozsa();
+void testSimon();
 void testGrover();
 void testShor();
 

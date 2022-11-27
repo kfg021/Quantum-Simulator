@@ -4,6 +4,11 @@
 #include "Random.hpp"
 #include <cassert>
 
+// TODO: maybe remove (simons stuff)
+#include <bitset>
+#include <utility>
+#include <set>
+
 DeutschJozsaResult DeutschJozsa(const Bijection& oracle){
     // n is the number of bits that f takes as input.
     int n = integerLog2(oracle.size()) - 1;
@@ -46,21 +51,72 @@ DeutschJozsaResult DeutschJozsa(const Bijection& oracle){
     }
 }
 
-Bijection makeBitOracle(const std::vector<bool>& f){
+int SimonQuantumSubroutine(const Bijection& oracle, int n){
+    QuantumRegister qr(2 * n);
+
+    for(int i = 0; i < n; i++){
+        qr.applyUnitary(Unitary::H(), {i});
+    }
+
+    std::vector<int> all;
+    for(int i = 0; i < 2*n; i++){
+        all.push_back(i);
+    }
+
+    qr.applyBijection(oracle, all);
+
+    for(int i = 0; i < n; i++){
+        qr.applyUnitary(Unitary::H(), {i});
+    }
+
+    std::vector<int> firstN;
+    for(int i = 0; i < n; i++){
+        firstN.push_back(i);
+    }
+    Ket output = qr.measure(firstN);
+    return output.getQubitStates();
+}
+
+int Simon(const Bijection& oracle){
+    int n = integerLog2(oracle.size()) / 2;
+
+    std::vector<int> y(n);
+    for(int i = 0; i < n; i++){
+        y[i] = SimonQuantumSubroutine(oracle, n);
+    }
+
+    for(int i : y){
+        std::cout << std::bitset<3>(i) << " ";
+    }
+    std::cout << std::endl;
+
+    return -1;
+}
+
+Bijection makeBitOracle(const std::vector<int>& f, int outputSize){
+    // Lambda to get the last n bits of integer a.
+    auto lastnBits = [](int a, int n){
+        return a & ~(~0 << n);
+    };
+
     // The oracle needs to take |x>|y> to |x>|f(x) xor y>. We can do this by, for all numbers i = {x, y}, setting oracle[{x, y}] = {x, y ^ f(x)}
     int N = f.size();
-    std::vector<int> oracle(2*N);
-    for(int i = 0; i < 2*N; i++){
-        int x = i >> 1;
-        bool y = i & 1;
-        int output = (x << 1) | (y ^ f[x]);
+    int oracleSize = N * (1 << outputSize);
+    std::vector<int> oracle(oracleSize);
+    for(int i = 0; i < oracleSize; i++){
+        int x = i >> outputSize;
+        int y = lastnBits(i, outputSize);
+        int output = (x << outputSize) | (y ^ f[x]);
         oracle[i] = output;
     }
     return Bijection(oracle);
 }
 
 int Grover(const Rotation& oracle, int numAnswers){
-    // N is the size of the domain of f. n is the number of bits that f takes as input.
+    /*
+    N is the size of the domain of f. 
+    n is the number of bits that f takes as input.
+    */
     int N = oracle.size();
     int n = integerLog2(N);
 

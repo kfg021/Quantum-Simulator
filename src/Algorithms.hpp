@@ -5,6 +5,8 @@
 #include "Function.hpp"
 #include "QuantumRegister.hpp"
 
+// TODO: consider using the same oracle for grovers algorithm and constructing a phase oracle from the bit oracle.
+
 /*
 Return type for the Deutsch-Jozsa algorithm (defined below)
 */
@@ -26,12 +28,16 @@ This oracle can be generated from a valid function f using the makeBitOracle fun
 */
 DeutschJozsaResult DeutschJozsa(const Bijection& oracle);
 
+int Simon(const Bijection& oracle);
+
 /*
-Constructs a bit oracle given a valid function f with range = {0, 1} for use in the Deutsch-Jozsa algorithm.
+Constructs a bit oracle given a valid function f for use in the Deutsch-Jozsa and Simon algorithms.
 The oracle is returned in the form of a bijection of size 2^n, where oracle(|x>|y>) = |x>|y xor f(x)>.
-This function assumes that f is given as a boolean vector of size 2^n for some positive integer n, where f[x] is f evaluated at x.
+This function assumes that f is given as a vector of size 2^n for some positive integer n, where f[x] is f evaluated at x.
+We also need to provide f's output size (in bits). For the Deutsch-Jozsa algorithm it is 1 (since f can only return 0 or 1),
+and in Simon's algorithm it is n (since f can return any positive integer less than 2^n).
 */
-Bijection makeBitOracle(const std::vector<bool>& f);
+Bijection makeBitOracle(const std::vector<int>& f, int outputSize);
 
 /*
 Given a function f(x) with domain of size N evaluating 1 for m values of x, this algorithm finds some x where f(x) = 1.
