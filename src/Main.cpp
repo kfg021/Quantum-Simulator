@@ -5,6 +5,7 @@ void runAllTests(){
     testDeutschJozsa();
     testSimon();
     testGrover();
+    testQFT();
     testShor();
 }
 

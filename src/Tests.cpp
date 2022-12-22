@@ -28,7 +28,7 @@ void testTeleportation(){
     // Alice entangles her remaining two qubits and measures the result.
     teleport.applyUnitary(Unitary::CNOT(), {0, 1});
     teleport.applyUnitary(Unitary::H(), {0});
-    Ket info = teleport.measure({0, 1});
+    BasisState info = teleport.measure({0, 1});
 
     // Now Alice sends her measurements to Bob so he can recover the qubit.
 
@@ -90,12 +90,30 @@ void testGrover(){
     std::cout << std::endl;
 }
 
+// Does a sanity check test on the QFT and IQFT. If we apply the QFT to a state and then apply the IQFT, we should expect to get the same state back.
+void testQFT(){
+    QuantumRegister qr(8);
+
+    // Initialize the register with 100 = |01101000>. To do this we need to apply an x to wires 1, 2, and 4.
+    qr.applyUnitary(Unitary::X(), {2});
+    qr.applyUnitary(Unitary::X(), {3});
+    qr.applyUnitary(Unitary::X(), {5});
+
+    // Apply QFT then IQFT. They should cancel each out.
+    QFT(qr, 0, 7);
+    IQFT(qr, 0, 7);
+
+    BasisState result = qr.measure(QuantumRegister::inclusiveRange(0, 7));
+    
+}
+
 // Tests Shor's algorithm on the number 221. We should get the factors 13 and 17 as output.
 void testShor(){
     std::cout << "RUNNING SHOR TEST..." << std::endl;
 
-    ShorResult factors = Shor(221, true);
-    std::cout << "Shor's algorithm calculated the factors of 221 as " << factors.factor1 << " and " << factors.factor2 << std::endl; 
+    // ShorResult factors = Shor(221, true);
+    // std::cout << "Shor's algorithm calculated the factors of 221 as " << factors.factor1 << " and " << factors.factor2 << std::endl; 
+    std::optional<ShorResult> factors = Shor(221, 19, true);
 
     std::cout << std::endl;
 }

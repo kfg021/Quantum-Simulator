@@ -23,12 +23,7 @@ DeutschJozsaResult DeutschJozsa(const Bijection& oracle){
     }
 
     // Apply the oracle
-    std::vector<int> all;
-    for(int i = 0; i < n+1; i++){
-        all.push_back(i);
-    }
-    // qr.applyUnitary(oracle, all);
-    qr.applyBijection(oracle, all);
+    qr.applyBijection(oracle, QuantumRegister::inclusiveRange(0, n));
 
     // Apply a Hadamard transform on the first n qubits.
     for(int i = 0; i < n; i++){
@@ -36,14 +31,10 @@ DeutschJozsaResult DeutschJozsa(const Bijection& oracle){
     }
 
     // Measure the first n qubits.
-    std::vector<int> firstN;
-    for(int i = 0; i < n; i++){
-        firstN.push_back(i);
-    }
-    Ket output = qr.measure(firstN);
+    BasisState output = qr.measure(QuantumRegister::inclusiveRange(0, n-1));
     
     // If we measured all n qubits to be 0, then the function is constant. Otherwise it is balanced.
-    if(output.getQubitStates() == 0){
+    if(output.toInteger() == 0){
         return DeutschJozsaResult::CONSTANT;
     }
     else{
@@ -58,23 +49,14 @@ int SimonQuantumSubroutine(const Bijection& oracle, int n){
         qr.applyUnitary(Unitary::H(), {i});
     }
 
-    std::vector<int> all;
-    for(int i = 0; i < 2*n; i++){
-        all.push_back(i);
-    }
-
-    qr.applyBijection(oracle, all);
+    qr.applyBijection(oracle, QuantumRegister::inclusiveRange(0, 2*n-1));
 
     for(int i = 0; i < n; i++){
         qr.applyUnitary(Unitary::H(), {i});
     }
 
-    std::vector<int> firstN;
-    for(int i = 0; i < n; i++){
-        firstN.push_back(i);
-    }
-    Ket output = qr.measure(firstN);
-    return output.getQubitStates();
+    BasisState output = qr.measure(QuantumRegister::inclusiveRange(0, n-1));
+    return output.toInteger();
 }
 
 int Simon(const Bijection& oracle){
@@ -128,10 +110,7 @@ int Grover(const Rotation& oracle, int numAnswers){
         qr.applyUnitary(Unitary::H(), {i});
     }
 
-    std::vector<int> all;
-    for(int i = 0; i < n; i++){
-        all.push_back(i);
-    }
+    std::vector<int> all = QuantumRegister::inclusiveRange(0, n-1);
 
     /* 
     Build the inside of the Grover diffusion operator by constructing the matrix 2|0^n><0^n| - I.
@@ -166,8 +145,8 @@ int Grover(const Rotation& oracle, int numAnswers){
     }
 
     // We measure all n qubits. With high probability, the output of these qubits in binary will give us a valid x such that f(x) = 1.
-    Ket output = qr.measure(all);
-    return output.getQubitStates();
+    BasisState output = qr.measure(all);
+    return output.toInteger();
 }
 
 Rotation makePhaseOracle(const std::vector<bool>& f){
@@ -204,7 +183,7 @@ void QFT(QuantumRegister& qr, int start, int end){
 
 void IQFT(QuantumRegister& qr, int start, int end){
     /*
-    Essentially the reverse of the QFT circuit.
+    The inverse of the QFT circuit.
     Apply all of the gates in reverse order, and reverse the directions of the phase gates.
     */
     for(int i = start; i < end-i; i++){
@@ -212,7 +191,7 @@ void IQFT(QuantumRegister& qr, int start, int end){
     }
 
     for(int i = end; i >= start; i--){
-        for(int j = end; j < i; j--){
+        for(int j = i+1; j <= end; j++){
             int k = j - i + 1;
             Unitary rk = Unitary::phase((-2 * PI) / (1 << k));
             qr.applyUnitary(rk.controlled(), {j, i});
@@ -234,7 +213,7 @@ Bijection makeShorUnitary(int a, int k, int N, int matrixSize){
 With high probability, given the values of N and a, this algorithm finds the period of the function f(x) = a^x (mod N).
 That is, the smallest r > 0 such that a^r = 1 (mod N).
 */
-Ket ShorQuantumSubroutine(int N, int a, int q, int n, bool log){
+BasisState ShorQuantumSubroutine(int N, int a, int q, int n, bool log){
     // Initialize the quantum register with q+n qubits. We also need to set the last qubit to 1.
     QuantumRegister qr(q+n);
     qr.applyUnitary(Unitary::X(), {q+n-1});
@@ -259,45 +238,37 @@ Ket ShorQuantumSubroutine(int N, int a, int q, int n, bool log){
         qr.applyBijection(ua2k.controlled(), qubitsToApply);
     }
 
-    std::vector<int> lastN;
-    for(int i = q; i < q+n; i++){
-        lastN.push_back(i);
-    }
-
     // Measure the last n qubits to reduce the state of the quantum system before we do a QFT. The output doesn't matter.
-    qr.measure(lastN);
+    qr.measure(QuantumRegister::inclusiveRange(q, q+n-1));
 
-    // Now we need to apply a QFT on the first q qubits.
-    if(log) std::cout << "Applying QFT..." << std::endl;
-    std::vector<int> firstQ;
-    for(int i = 0; i < q; i++){
-        firstQ.push_back(i);
-    }
-    QFT(qr, 0, q-1);
+    // Now we need to apply an inverse QFT on the first q qubits.
+    if(log) std::cout << "Applying inverse QFT..." << std::endl;
+    IQFT(qr, 0, q-1);
 
     // Now we measure the first q qubits.
-    Ket output = qr.measure(firstQ);
+    BasisState output = qr.measure(QuantumRegister::inclusiveRange(0, q-1));
     return output;
 }
 
 ShorResult Shor(int N, bool log){
     // Keep trying random values of a until we find the factors.
-    ShorResult ans = SHOR_INVALID;
-    while(ans == SHOR_INVALID){
+    while(true){
         int a = generateRandomInt(2, N-1);
-        ans = Shor(N, a, log);
+        std::optional<ShorResult> ans = Shor(N, a, log);
+        if(ans.has_value()){
+            return ans.value();
+        }
     }
-    return ans;
 }
 
-ShorResult Shor(int N, int a, bool log){
+std::optional<ShorResult> Shor(int N, int a, bool log){
     if(log) std::cout << "Running Shor's algorithm with N = " << N << " and a = " << a << std::endl;
     // If a happens to share a factor with N, then we are done and don't need to run the quantum portion of the algorithm.
     int K = gcd(a, N);
     if(K != 1){
         // The factors of N are K and N/K. However, since we want to test the quantum portion, we ignore the result.
         if(log) std::cout << "We found an answer, but using classical methods." << std::endl;
-        return SHOR_INVALID;
+        return {};
     }
 
     // Find q, the number of qubits for the first portion of the register.
@@ -309,9 +280,9 @@ ShorResult Shor(int N, int a, bool log){
     // Find n, the number of qubits for the second portion of the register.
     int n = integerLog2(N) + 1; 
 
-    Ket output = ShorQuantumSubroutine(N, a, q, n, log);
+    BasisState output = ShorQuantumSubroutine(N, a, q, n, log);
     
-    int y = output.getQubitStates();
+    int y = output.toInteger();
     int Q = 1 << q;
     std::vector<int> expansion = continuedFractionExpansion(y, Q);
 
@@ -335,9 +306,11 @@ ShorResult Shor(int N, int a, bool log){
     if(log) std::cout << "Testing r and some of its even multiples..." << std::endl;
     for(int i = 1; i <= 5; i++){
         int r_test = r % 2 == 0 ? i * r : 2 * i * r;
+        std::cout << "r_test: " << r_test << "\n";
         int aExp = integerPowerMod(a, r_test/2, N);
-        if(aExp % N == N-1){
-            // If a^(r/2) = -1 (mod N), then it will not help us find the factors.
+        std::cout << "a_exp: " << aExp << "\n";
+        if(aExp == 1 || aExp == N-1){
+            // If a^(r/2) = +-1 (mod N), then it will not help us find the factors.
             continue;
         }
         
@@ -352,10 +325,10 @@ ShorResult Shor(int N, int a, bool log){
         }
 
         if(log) std::cout << "r = " << r_test << " gave us the correct factors." << std::endl;
-        return {factor1, factor2};
+        return ShorResult{factor1, factor2};
     }
     
     // If none of those r values worked, return SHOR_INVALID as we couldn't find an answer.
     if(log) std::cout << "Didn't find an answer." << std::endl;
-    return SHOR_INVALID;
+    return {};
 }

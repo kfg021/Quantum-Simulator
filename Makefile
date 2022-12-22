@@ -5,7 +5,7 @@ SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 # LDFLAGS := ...
 # CPPFLAGS := ...
-CXXFLAGS := -std=c++14
+CXXFLAGS := -std=c++17
 
 test: $(OBJ_FILES)
 	g++ $(LDFLAGS) -o $@ $^

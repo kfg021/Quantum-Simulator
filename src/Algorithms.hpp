@@ -5,6 +5,8 @@
 #include "Function.hpp"
 #include "QuantumRegister.hpp"
 
+#include <optional>
+
 // TODO: consider using the same oracle for grovers algorithm and constructing a phase oracle from the bit oracle.
 
 /*
@@ -82,11 +84,11 @@ Return type for Shor's algorithm (defined below)
 struct ShorResult {
     int factor1;
     int factor2;
-    bool operator==(const ShorResult& sr){
-        return factor1 == sr.factor1 && factor2 == sr.factor2;
-    }
+    // bool operator==(const ShorResult& sr){
+    //     return factor1 == sr.factor1 && factor2 == sr.factor2;
+    // }
 };
-const ShorResult SHOR_INVALID = {-1, -1};
+// const ShorResult SHOR_INVALID = {-1, -1};
 
 /*
 Given an integer N that is the product of two primes, calculate its factors.
@@ -103,6 +105,6 @@ ShorResult Shor(int N, bool log = false);
 This is verion of Shor's algorithm where the guess a is given. This function runs the quantum subroutine once, returns the factors of N if it finds them,
 and otherwise returns SHOR_INVALID.
 */
-ShorResult Shor(int N, int a, bool log = false);
+std::optional<ShorResult> Shor(int N, int a, bool log = false);
 
 #endif

@@ -6,6 +6,7 @@ void testTeleportation();
 void testDeutschJozsa();
 void testSimon();
 void testGrover();
+void testQFT();
 void testShor();
 
 #endif

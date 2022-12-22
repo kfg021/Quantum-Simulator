@@ -10,11 +10,11 @@ If some state has a probability of occuring less than this, then we set it to 0 
 */
 const double MIN_PROBABILITY = 1e-20;
 
-QuantumRegister::QuantumRegister(int _qubits): qubits(_qubits) {
+QuantumRegister::QuantumRegister(int _qubits): numQubits(_qubits) {
     superposition[0] = 1;
 }
 
-QuantumRegister::QuantumRegister(int _qubits, std::unordered_map<int, std::complex<double>> _superposition): qubits(_qubits), superposition(_superposition){}
+QuantumRegister::QuantumRegister(int _qubits, std::unordered_map<int, std::complex<double>> _superposition): numQubits(_qubits), superposition(_superposition){}
 
 int QuantumRegister::numStates(){
     return superposition.size();
@@ -34,7 +34,7 @@ double QuantumRegister::probability(int state) const {
     return std::norm(getCoefficient(state));
 }
 
-Ket QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
+BasisState QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
     for(int i : qubitsToMeasure){
         // Make sure that we are not re-measuring a qubit.
         assert(measuredQubits.find(i) == measuredQubits.end());
@@ -52,18 +52,18 @@ Ket QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
         int state = entry.first;
         std::complex<double> coeff = entry.second;
 
-        Ket allQubits(state, this->qubits);
-        Ket measuredQubitValues(0, 0);
+        BasisState allQubits(state, this->numQubits);
+        BasisState measuredQubitValues(0, 0);
         for(int i : qubitsToMeasure){
             measuredQubitValues.addQubit(allQubits.getQubit(i));
         }
 
-        possibleOutcomes[measuredQubitValues.getQubitStates()].probability += this->probability(state);
-        possibleOutcomes[measuredQubitValues.getQubitStates()].superposition[state] += coeff;
+        possibleOutcomes[measuredQubitValues.toInteger()].probability += this->probability(state);
+        possibleOutcomes[measuredQubitValues.toInteger()].superposition[state] += coeff;
     }
 
     int measureSize = qubitsToMeasure.size();
-    int remainingSize = this->qubits - measureSize;
+    int remainingSize = this->numQubits - measureSize;
 
     double rand = generateRandomDouble();
     double sum = 0;
@@ -78,7 +78,7 @@ Ket QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
                 coeff *= 1/sqrt(mo.probability);
             }
             this->superposition = mo.superposition;
-            return Ket(state, measureSize);
+            return BasisState(state, measureSize);
         }
     }
 
@@ -90,7 +90,7 @@ Ket QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
         coeff *= 1/sqrt(mo.probability);
     }
     this->superposition = mo.superposition;
-    return Ket(state, measureSize);
+    return BasisState(state, measureSize);
 }
 
 void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qubitsToApply){
@@ -107,21 +107,21 @@ void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qub
         int state = entry.first;
         std::complex<double> coeff = entry.second;
         
-        Ket allQubits(state, this->qubits);
-        Ket relevantQubits(0, m);
+        BasisState allQubits(state, this->numQubits);
+        BasisState relevantQubits(0, m);
         for(int i = 0; i < m; i++){
             relevantQubits.setQubit(i, allQubits.getQubit(qubitsToApply[i]));
         }
 
         for(int j = 0; j < (int)u.size(); j++){
-            int i = relevantQubits.getQubitStates();
+            int i = relevantQubits.toInteger();
             if(u[i][j] != 0.0){
                 std::complex<double> newCoeff = coeff * u[i][j];
-                Ket appliedQubits(j, m);
+                BasisState appliedQubits(j, m);
                 for(int k = 0; k < m; k++){
                     allQubits.setQubit(qubitsToApply[k], appliedQubits.getQubit(k));
                 }
-                unitaryResult[allQubits.getQubitStates()] += newCoeff;
+                unitaryResult[allQubits.toInteger()] += newCoeff;
             }
         }
     }
@@ -154,19 +154,19 @@ void QuantumRegister::applyBijection(const Bijection& f, const std::vector<int>&
         int state = entry.first;
         std::complex<double> coeff = entry.second;
         
-        Ket allQubits(state, this->qubits);
-        Ket relevantQubits(0, m);
+        BasisState allQubits(state, this->numQubits);
+        BasisState relevantQubits(0, m);
         for(int i = 0; i < m; i++){
             relevantQubits.setQubit(i, allQubits.getQubit(qubitsToApply[i]));
         }
 
-        int x = relevantQubits.getQubitStates();
+        int x = relevantQubits.toInteger();
         int fx = f.apply(x);
-        Ket appliedQubits(fx, m);
+        BasisState appliedQubits(fx, m);
         for(int k = 0; k < m; k++){
             allQubits.setQubit(qubitsToApply[k], appliedQubits.getQubit(k));
         }
-        bijectionResult[allQubits.getQubitStates()] = coeff;
+        bijectionResult[allQubits.toInteger()] = coeff;
     }
 
     superposition = bijectionResult;
@@ -184,13 +184,13 @@ void QuantumRegister::applyRotation(const Rotation& f, const std::vector<int>& q
     for(const auto& entry : superposition){
         int state = entry.first;
         
-        Ket allQubits(state, this->qubits);
-        Ket relevantQubits(0, m);
+        BasisState allQubits(state, this->numQubits);
+        BasisState relevantQubits(0, m);
         for(int i = 0; i < m; i++){
             relevantQubits.setQubit(i, allQubits.getQubit(qubitsToApply[i]));
         }
 
-        int x = relevantQubits.getQubitStates();
+        int x = relevantQubits.toInteger();
         std::complex<double> rotation = f.getRotation(x);
         superposition[state] *= rotation;
     }
@@ -202,7 +202,7 @@ bool QuantumRegister::operator==(const QuantumRegister& qr) const {
 
 // TODO: maybe add an option to print a subset of qubits
 std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr){
-    if((int)qr.measuredQubits.size() == qr.qubits){
+    if((int)qr.measuredQubits.size() == qr.numQubits){
         os << "EMPTY";
         return os;
     }
@@ -221,9 +221,9 @@ std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr){
         int state = iterator->first;
         std::complex<double> coeff = iterator->second;
 
-        Ket allQubits(state, qr.qubits);
-        Ket unmeasuredQubits(0, 0);
-        for(int i = 0; i < qr.qubits; i++){
+        BasisState allQubits(state, qr.numQubits);
+        BasisState unmeasuredQubits(0, 0);
+        for(int i = 0; i < qr.numQubits; i++){
             // Only print out the qubit if it has not already been measured.
             if(qr.measuredQubits.find(i) == qr.measuredQubits.end()){
                 unmeasuredQubits.addQubit(allQubits.getQubit(i));
@@ -233,4 +233,12 @@ std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr){
         os << coeff << unmeasuredQubits;
     }
     return os;
+}
+
+std::vector<int> QuantumRegister::inclusiveRange(int start, int end){
+    std::vector<int> ans;
+    for(int i = start; i <= end; i++){
+        ans.push_back(i);
+    }
+    return ans;
 }
