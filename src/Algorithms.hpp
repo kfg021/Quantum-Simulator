@@ -30,16 +30,14 @@ This oracle can be generated from a valid function f using the makeBitOracle fun
 */
 DeutschJozsaResult DeutschJozsa(const Bijection& oracle);
 
-int Simon(const Bijection& oracle);
-
 /*
-Constructs a bit oracle given a valid function f for use in the Deutsch-Jozsa and Simon algorithms.
+Constructs a bit oracle given a valid function f for use in the Deutsch-Jozsa algorithm.
 The oracle is returned in the form of a bijection of size 2^n, where oracle(|x>|y>) = |x>|y xor f(x)>.
 This function assumes that f is given as a vector of size 2^n for some positive integer n, where f[x] is f evaluated at x.
-We also need to provide f's output size (in bits). For the Deutsch-Jozsa algorithm it is 1 (since f can only return 0 or 1),
-and in Simon's algorithm it is n (since f can return any positive integer less than 2^n).
+There is also an option to provide f's output size (in bits). For the Deutsch-Jozsa algorithm it is 1 (since f can only return 0 or 1),
+but bit oracles are general concepts that can be applied to other problems with different sized functions (e.g. Simon's algorithm).
 */
-Bijection makeBitOracle(const std::vector<int>& f, int outputSize);
+Bijection makeBitOracle(const std::vector<int>& f, int outputSize = 1);
 
 /*
 Given a function f(x) with domain of size N evaluating 1 for m values of x, this algorithm finds some x where f(x) = 1.

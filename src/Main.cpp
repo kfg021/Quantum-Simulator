@@ -3,7 +3,6 @@
 void runAllTests(){
     testTeleportation();
     testDeutschJozsa();
-    testSimon();
     testGrover();
     testQFT();
     testShor();

@@ -4,11 +4,6 @@
 #include "Random.hpp"
 #include <cassert>
 
-// TODO: maybe remove (simons stuff)
-#include <bitset>
-#include <utility>
-#include <set>
-
 DeutschJozsaResult DeutschJozsa(const Bijection& oracle){
     // n is the number of bits that f takes as input.
     int n = integerLog2(oracle.size()) - 1;
@@ -40,39 +35,6 @@ DeutschJozsaResult DeutschJozsa(const Bijection& oracle){
     else{
         return DeutschJozsaResult::BALANCED;
     }
-}
-
-int SimonQuantumSubroutine(const Bijection& oracle, int n){
-    QuantumRegister qr(2 * n);
-
-    for(int i = 0; i < n; i++){
-        qr.applyUnitary(Unitary::H(), {i});
-    }
-
-    qr.applyBijection(oracle, QuantumRegister::inclusiveRange(0, 2*n-1));
-
-    for(int i = 0; i < n; i++){
-        qr.applyUnitary(Unitary::H(), {i});
-    }
-
-    BasisState output = qr.measure(QuantumRegister::inclusiveRange(0, n-1));
-    return output.toInteger();
-}
-
-int Simon(const Bijection& oracle){
-    int n = integerLog2(oracle.size()) / 2;
-
-    std::vector<int> y(n);
-    for(int i = 0; i < n; i++){
-        y[i] = SimonQuantumSubroutine(oracle, n);
-    }
-
-    for(int i : y){
-        std::cout << std::bitset<3>(i) << " ";
-    }
-    std::cout << std::endl;
-
-    return -1;
 }
 
 Bijection makeBitOracle(const std::vector<int>& f, int outputSize){
@@ -306,9 +268,7 @@ std::optional<ShorResult> Shor(int N, int a, bool log){
     if(log) std::cout << "Testing r and some of its even multiples..." << std::endl;
     for(int i = 1; i <= 5; i++){
         int r_test = r % 2 == 0 ? i * r : 2 * i * r;
-        std::cout << "r_test: " << r_test << "\n";
         int aExp = integerPowerMod(a, r_test/2, N);
-        std::cout << "a_exp: " << aExp << "\n";
         if(aExp == 1 || aExp == N-1){
             // If a^(r/2) = +-1 (mod N), then it will not help us find the factors.
             continue;

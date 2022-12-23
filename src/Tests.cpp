@@ -55,24 +55,14 @@ void testDeutschJozsa(){
     };
 
     std::vector<int> fConstant(16, 1);
-    Bijection bConstant = makeBitOracle(fConstant, 1);
+    Bijection bConstant = makeBitOracle(fConstant);
     std::string outputConstant = resultToString(DeutschJozsa(bConstant));
     std::cout << "Deutsch-Jozsa on function 1 returned " + outputConstant << " (expected: constant)" << std::endl;
 
     std::vector<int> fBalanced = {1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1};
-    Bijection bBalanced = makeBitOracle(fBalanced, 1);
+    Bijection bBalanced = makeBitOracle(fBalanced);
     std::string outputBalanced = resultToString(DeutschJozsa(bBalanced));
     std::cout << "Deutsch-Jozsa on function 2 returned " + outputBalanced << " (expected: balanced)" << std::endl;
-
-    std::cout << std::endl;
-}
-
-void testSimon(){
-    std::cout << "RUNNING SIMON TEST..." << std::endl;
-
-    std::vector<int> f = {0b101, 0b010, 0b000, 0b110, 0b000, 0b110, 0b101, 0b010};
-    Bijection oracle = makeBitOracle(f, 3);
-    Simon(oracle);
 
     std::cout << std::endl;
 }
