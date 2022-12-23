@@ -6,7 +6,6 @@
 Tests the quantum teleportation circuit. 
 This circuit shows that Alice can transfer an arbitrary qubit to Bob using only classical communication provided they share a Bell state.
 */
-// TODO: fix to print correctly (might be with qubit)??
 void testTeleportation(){
     std::cout << "RUNNING TELEPORTATION TEST: " << std::endl;
 
@@ -15,9 +14,9 @@ void testTeleportation(){
 
     // We generate a random qubit on the first wire by applying an X gate, and then appling a random rotation. This is the qubit to be teleported.
     teleport.applyUnitary(Unitary::X(), {0});
-    double rand = generateRandomDouble();
-    teleport.applyUnitary(Unitary::phase(2 * PI * rand), {0});
-    std::cout << "Original qubit: " << teleport << std::endl;
+    double randomAngle = 2 * PI * generateRandomDouble();
+    teleport.applyUnitary(Unitary::phase(randomAngle), {0});
+    std::cout << "Original qubit: " << std::exp(1i * randomAngle) << "|1>" << std::endl;
 
     // Create the Bell state 1/sqrt(2)(|00> + |11>) using the last two qubits.
     teleport.applyUnitary(Unitary::H(), {1});
@@ -82,28 +81,31 @@ void testGrover(){
 
 // Does a sanity check test on the QFT and IQFT. If we apply the QFT to a state and then apply the IQFT, we should expect to get the same state back.
 void testQFT(){
+    std::cout << "RUNNING QFT TEST..." << std::endl;
+
     QuantumRegister qr(8);
 
-    // Initialize the register with 100 = |01101000>. To do this we need to apply an x to wires 1, 2, and 4.
+    // Initialize the register with 100 = |01101000>. To do this we need to apply an X gate to wires 1, 2, and 4.
+    qr.applyUnitary(Unitary::X(), {1});
     qr.applyUnitary(Unitary::X(), {2});
-    qr.applyUnitary(Unitary::X(), {3});
-    qr.applyUnitary(Unitary::X(), {5});
+    qr.applyUnitary(Unitary::X(), {4});
 
     // Apply QFT then IQFT. They should cancel each out.
     QFT(qr, 0, 7);
     IQFT(qr, 0, 7);
 
     BasisState result = qr.measure(QuantumRegister::inclusiveRange(0, 7));
-    
+    std::cout << "After applying both the QFT and inverse QFT, we got " << result << " (expected: |01101000>)" << std::endl;
+
+    std::cout << std::endl;
 }
 
 // Tests Shor's algorithm on the number 221. We should get the factors 13 and 17 as output.
 void testShor(){
     std::cout << "RUNNING SHOR TEST..." << std::endl;
 
-    // ShorResult factors = Shor(221, true);
-    // std::cout << "Shor's algorithm calculated the factors of 221 as " << factors.factor1 << " and " << factors.factor2 << std::endl; 
-    std::optional<ShorResult> factors = Shor(221, 19, true);
+    ShorResult factors = Shor(221, true);
+    std::cout << "Shor's algorithm calculated the factors of 221 as " << factors.factor1 << " and " << factors.factor2 << std::endl; 
 
     std::cout << std::endl;
 }

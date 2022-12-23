@@ -139,7 +139,7 @@ void QFT(QuantumRegister& qr, int start, int end){
     }
 
     for(int i = start; i < end-i; i++){
-        qr.applyUnitary(Unitary::Swap(), {i, end-i});
+        qr.applyUnitary(Unitary::SWAP(), {i, end-i});
     }
 }
 
@@ -149,7 +149,7 @@ void IQFT(QuantumRegister& qr, int start, int end){
     Apply all of the gates in reverse order, and reverse the directions of the phase gates.
     */
     for(int i = start; i < end-i; i++){
-        qr.applyUnitary(Unitary::Swap(), {i, end-i});
+        qr.applyUnitary(Unitary::SWAP(), {i, end-i});
     }
 
     for(int i = end; i >= start; i--){

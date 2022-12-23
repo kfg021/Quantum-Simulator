@@ -4,10 +4,7 @@
 #include "Unitary.hpp"
 #include "Function.hpp"
 #include "QuantumRegister.hpp"
-
 #include <optional>
-
-// TODO: consider using the same oracle for grovers algorithm and constructing a phase oracle from the bit oracle.
 
 /*
 Return type for the Deutsch-Jozsa algorithm (defined below)
@@ -82,11 +79,7 @@ Return type for Shor's algorithm (defined below)
 struct ShorResult {
     int factor1;
     int factor2;
-    // bool operator==(const ShorResult& sr){
-    //     return factor1 == sr.factor1 && factor2 == sr.factor2;
-    // }
 };
-// const ShorResult SHOR_INVALID = {-1, -1};
 
 /*
 Given an integer N that is the product of two primes, calculate its factors.

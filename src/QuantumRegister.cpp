@@ -82,15 +82,9 @@ BasisState QuantumRegister::measure(const std::vector<int>& qubitsToMeasure){
         }
     }
 
-    // In theory should never happen since probabilities sum to 1, but might due to rounding errors. In this case just return the last state.
-    int state = possibleOutcomes.end()->first;
-    MeasurementOutcome& mo = possibleOutcomes.end()->second;
-    for(auto& entry2 : mo.superposition){
-        std::complex<double>& coeff = entry2.second;
-        coeff *= 1/sqrt(mo.probability);
-    }
-    this->superposition = mo.superposition;
-    return BasisState(state, measureSize);
+    // If we break out of the above loop, this means that the probabilities do not sum to 1. 
+    // This likely means that a non-unitary transformation was used somewhere in the code.
+    assert(false);
 }
 
 void QuantumRegister::applyUnitary(const Unitary& u, const std::vector<int>& qubitsToApply){
@@ -200,7 +194,6 @@ bool QuantumRegister::operator==(const QuantumRegister& qr) const {
     return superposition == qr.superposition;
 }
 
-// TODO: maybe add an option to print a subset of qubits
 std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr){
     if((int)qr.measuredQubits.size() == qr.numQubits){
         os << "EMPTY";

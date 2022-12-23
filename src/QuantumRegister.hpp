@@ -11,15 +11,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
-// TODO: superposition should probably be abstracted into a class called quantumState. Then we can change the constructor; change the apply functions to work on quantumstates.
-// also we can let a qubit be a 1-bit quantum state. maybe also add append functionality to quantum states/registers??
 class QuantumRegister{
     private:
     const int numQubits;
 
-    // TODO; address this comment: do we want to use map or unordered?
-    // Right now we are using a map to store the superposition of states. This makes the code easier to debug since the order of the states is deterministic.
-    // May change this to an unordered_map in the future for performance reasons.
     std::unordered_map<int, std::complex<double>> superposition; 
 
     std::unordered_set<int> measuredQubits;

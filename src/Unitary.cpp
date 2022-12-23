@@ -12,6 +12,11 @@ int Unitary::size() const {
     return matrix.size();
 }
 
+// Constructs a square matrix of all zeros of a given size
+Matrix zero(int size){
+    return Matrix(size, Vector(size, 0));
+}
+
 Unitary Unitary::operator*(const Unitary& u) const {
     assert(this->size() == u.size());
 
@@ -110,10 +115,6 @@ std::ostream& operator<<(std::ostream& os, const Unitary& u){
     return os;
 }
 
-Unitary Unitary::zero(int size){
-    return Matrix(size, Vector(size, 0));
-}
-
 Unitary Unitary::identity(int size){
     Unitary I = zero(size);
     for(int i = 0; i < size; i++){
@@ -123,67 +124,60 @@ Unitary Unitary::identity(int size){
 }
 
 Unitary Unitary::X(){
-    return Unitary({
+    static const Unitary x({
         {0, 1},
         {1, 0},
     });
+    return x;
 }
 
 Unitary Unitary::Y(){
-    return Unitary({
+    static const Unitary y({
         {0, std::complex<double>(0, -1)},
         {std::complex<double>(0, 1), 0}
     });
+    return y;
 }
 
 Unitary Unitary::Z(){
-    return Unitary({
+    static const Unitary z({
         {1, 0},
         {0, -1},
     });
+    return z;
 }
 
 Unitary Unitary::H(){
-    return Unitary({
+    static const Unitary h({
         {1/sqrt(2), 1/sqrt(2)},
         {1/sqrt(2), -1/sqrt(2)},
     });
+    return h;
+}
+
+Unitary Unitary::CNOT(){
+    static const Unitary cnot({
+        {1, 0, 0, 0},
+        {0, 1, 0, 0},
+        {0, 0, 0, 1},
+        {0, 0, 1, 0}
+    });
+    return cnot;
+}
+
+Unitary Unitary::SWAP(){
+    static const Unitary swap({
+        {1, 0, 0, 0},
+        {0, 0, 1, 0},
+        {0, 1, 0, 0},
+        {0, 0, 0, 1}
+    });
+    return swap;
 }
 
 Unitary Unitary::phase(double theta){
     return Unitary({
         {1, 0},
         {0, std::exp(1i * theta)},
-    });
-}
-
-Unitary Unitary::CNOT(){
-    return Unitary({
-        {1, 0, 0, 0},
-        {0, 1, 0, 0},
-        {0, 0, 0, 1},
-        {0, 0, 1, 0}
-    });
-}
-
-Unitary Unitary::Toffoli(){
-    return Unitary({
-        {1, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 0, 0, 0, 0, 0, 0},
-        {0, 0, 1, 0, 0, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0, 0},
-        {0, 0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 1},
-        {0, 0, 0, 0, 0, 0, 1, 0},
-    });
-}
-
-Unitary Unitary::Swap(){
-    return Unitary({
-        {1, 0, 0, 0},
-        {0, 0, 1, 0},
-        {0, 1, 0, 0},
-        {0, 0, 0, 1}
     });
 }
