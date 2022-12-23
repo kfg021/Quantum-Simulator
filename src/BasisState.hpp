@@ -4,6 +4,10 @@
 #include <string>
 #include <ostream>
 
+/*
+This class represents a basis vector for an n-dimensional quantum state.
+We can represent an arbitrary n qubit quantum state as a superposition of basis vectors.
+*/
 class BasisState{
     private:
     int qubitStates;
@@ -18,9 +22,10 @@ class BasisState{
 
     int toInteger();
 
-    // add an extra qubit to the end of the basis state.
+    // Add an extra qubit to the end of the basis state.
     void addQubit(bool value);
 
+    // These functions are used to print human-readable versions of a basis vector.
     std::string toBinaryString() const;
     friend std::ostream& operator<<(std::ostream& os, const BasisState& k);
 };

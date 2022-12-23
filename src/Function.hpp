@@ -4,6 +4,11 @@
 #include <vector>
 #include <complex>
 
+/*
+Represents a bijection, that is, a one-to-one mapping.
+We could instead represent this as a unitary matrix, but the matrix would have O(n^2) zeros,
+so we can save computation time by only storing a mapping of size O(n).
+*/
 class Bijection{
     private:
     const std::vector<int> f;
@@ -15,6 +20,11 @@ class Bijection{
     Bijection controlled() const;
 };
 
+/*
+Represents a rotation, which multiplies each qubit by some complex number of magnitude 1.
+Similar to the bijection, we could instead represent this as a unitary matrix, but the mtrix would have O(n^2) zeros,
+so we can save computation time by only storing a mapping of size O(n).
+*/
 class Rotation{
     private:
     const std::vector<std::complex<double>> f;

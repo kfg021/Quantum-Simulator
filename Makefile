@@ -23,4 +23,4 @@ clean:
 
 # g++ = clang
 # g++-12 = g++
-# NOTE: we can compile simply with g++ -std=c++14 -o test src/*.cpp
+# NOTE: we can compile and run simply with g++ -std=c++17 -o test src/*.cpp && ./test

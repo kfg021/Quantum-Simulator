@@ -190,10 +190,6 @@ void QuantumRegister::applyRotation(const Rotation& f, const std::vector<int>& q
     }
 }
 
-bool QuantumRegister::operator==(const QuantumRegister& qr) const {
-    return superposition == qr.superposition;
-}
-
 std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr){
     if((int)qr.measuredQubits.size() == qr.numQubits){
         os << "EMPTY";

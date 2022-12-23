@@ -11,6 +11,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
+/*
+Represents a quantum register. In order to use it to simulate quantum computation, one would first initialize a quantum register with n qubits,
+apply some set of quantum gates (unitary transformations) to subsets of the qubits, and then perform a measurement to get an answer.
+*/
 class QuantumRegister{
     private:
     const int numQubits;
@@ -33,8 +37,6 @@ class QuantumRegister{
     void applyUnitary(const Unitary& u, const std::vector<int>& qubitsToApply);
     void applyBijection(const Bijection& f, const std::vector<int>& qubitsToApply);
     void applyRotation(const Rotation& f, const std::vector<int>& qubitsToApply);
-
-    bool operator==(const QuantumRegister& qr) const;
 
     friend std::ostream& operator<<(std::ostream& os, const QuantumRegister& qr);
 
