@@ -22,7 +22,7 @@ class Bijection{
 
 /*
 Represents a rotation, which multiplies each qubit by some complex number of magnitude 1.
-Similar to the bijection, we could instead represent this as a unitary matrix, but the mtrix would have O(n^2) zeros,
+Similar to the bijection, we could instead represent this as a unitary matrix, but the matrix would have O(n^2) zeros,
 so we can save computation time by only storing a mapping of size O(n).
 */
 class Rotation{
